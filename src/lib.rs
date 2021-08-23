@@ -37,7 +37,7 @@ mod target {
     static NOTE_GNU_BUILD_ID_END: [u8; 0] = [];
 
     pub fn build_id() -> Option<&'static [u8]> {
-        Ok(unsafe { core::slice::from_raw_parts(NOTE_GNU_BUILD_ID_END.as_ptr().offset(-20), 20) })
+        Some(unsafe { core::slice::from_raw_parts(NOTE_GNU_BUILD_ID_END.as_ptr().offset(-20), 20) })
     }
 }
 
