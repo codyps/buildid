@@ -16,7 +16,7 @@ libc = { version = "0.2", features = ["extra_traits"] }
 num = "*"
 
 [target.'cfg(windows)'.dependencies]
-object = "0.26"
+object = "0.27"
 winapi = { version = "0.3", features = ["psapi", "libloaderapi"] }
 lazy_static = "1"
 
