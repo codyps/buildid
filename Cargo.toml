@@ -3,10 +3,22 @@ name = "buildid"
 version = "0.1.0"
 edition = "2018"
 keywords = ["no_std"]
-license = "MPL-2.0"
+license = "GPL-2.0-or-later OR CDDL"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
+[dependencies]
+thiserror = "*"
+tracing = "*"
+
+[target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]
+# extra_traits: give me Debug or give me death
+libc = { version = "0.2", features = ["extra_traits"] }
+num = "*"
 
 [target.'cfg(windows)'.dependencies]
 object = "0.26"
 winapi = "0.3"
+
+[dev-dependencies]
+env_logger = "*"
+tracing = { version = "*", features = ["log"] }
