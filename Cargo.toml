@@ -3,7 +3,7 @@ name = "buildid"
 version = "0.1.0"
 edition = "2018"
 keywords = ["no_std"]
-license = "GPL-2.0-or-later OR CDDL"
+license = "GPL-2.0-or-later OR CDDL-1.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
 [dependencies]
@@ -17,7 +17,8 @@ num = "*"
 
 [target.'cfg(windows)'.dependencies]
 object = "0.26"
-winapi = "0.3"
+winapi = { version = "0.3", features = ["psapi", "libloaderapi"] }
+lazy_static = "1"
 
 [dev-dependencies]
 env_logger = "*"

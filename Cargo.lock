@@ -39,6 +39,7 @@ name = "buildid"
 version = "0.1.0"
 dependencies = [
  "env_logger",
+ "lazy_static",
  "libc",
  "num",
  "object",

@@ -22,6 +22,7 @@
 #[path = "elf.rs"]
 mod target;
 
+#[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
 mod align;
 
 #[cfg(all(target_family = "unix", target_vendor = "apple"))]
