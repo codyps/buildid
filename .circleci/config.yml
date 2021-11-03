@@ -1,14 +1,9 @@
 version: 2.1
-
-jobs:
-  test:
-    docker:
-      - image: cimg/rust:1.56.1
-    steps:
-      - checkout
-      - run: cargo test
+orbs:
+  rust: circleci/rust@1.6.0
 
 workflows:
-  build-workflow:
+  production:
     jobs:
-      - test
+      - rust/lint-test-build:
+        release: true
