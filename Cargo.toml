@@ -7,13 +7,12 @@ license = "GPL-2.0-or-later OR CDDL-1.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
 [dependencies]
-thiserror = "*"
-tracing = "*"
+thiserror = "1"
+tracing = "0.1"
 
 [target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]
 # extra_traits: give me Debug or give me death
 libc = { version = "0.2", features = ["extra_traits"] }
-num = "*"
 
 [target.'cfg(windows)'.dependencies]
 object = "0.27"
