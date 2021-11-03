@@ -6,4 +6,4 @@ workflows:
   production:
     jobs:
       - rust/lint-test-build:
-        release: true
+          release: true
