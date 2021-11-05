@@ -15,8 +15,7 @@ tracing = "0.1"
 libc = { version = "0.2", features = ["extra_traits"] }
 
 [target.'cfg(windows)'.dependencies]
-object = "0.27"
-winapi = { version = "0.3", features = ["psapi", "libloaderapi"] }
+winapi = { version = "0.3", features = ["libloaderapi", "winnt", "dbghelp"] }
 lazy_static = "1"
 
 [dev-dependencies]
