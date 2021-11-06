@@ -287,33 +287,6 @@ pub fn build_id() -> Option<&'static [u8]> {
             }
         }
 
-        /*
-                   for (unsigned i = 0; i < info->dlpi_phnum; i++) {
-            if (info->dlpi_phdr[i].p_type != PT_NOTE)
-                continue;
-
-            struct build_id_note *note = (void *)(info->dlpi_addr +
-                                                  info->dlpi_phdr[i].p_vaddr);
-            ptrdiff_t len = info->dlpi_phdr[i].p_filesz;
-
-            while (len >= sizeof(struct build_id_note)) {
-                if (note->nhdr.n_type == NT_GNU_BUILD_ID &&
-                    note->nhdr.n_descsz != 0 &&
-                    note->nhdr.n_namesz == 4 &&
-                    memcmp(note->name, "GNU", 4) == 0) {
-                    data->note = note;
-                    return 1;
-                }
-
-                size_t offset = sizeof(ElfW(Nhdr)) +
-                                ALIGN(note->nhdr.n_namesz, 4) +
-                                ALIGN(note->nhdr.n_descsz, 4);
-                note = (struct build_id_note *)((char *)note + offset);
-                len -= offset;
-            }
-        }
-            */
-
         0
     });
 
