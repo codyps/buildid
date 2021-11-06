@@ -79,7 +79,7 @@ impl Note {
 
     // technically safe because we'll only panic if I screw up
     fn from_bytes_raw(data: &[u8]) -> &Self {
-        unsafe { std::mem::transmute::<&[u8], &Self>(data) }
+        unsafe { &*(data as *const [u8] as *const Note) }
     }
 
     fn from_bytes(data: &[u8]) -> Result<(&Self, &[u8]), NoteError> {
