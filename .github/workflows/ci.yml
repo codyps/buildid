@@ -18,7 +18,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ rust_version }}
+          toolchain: ${{ matrix.rust_version }}
           profile: minimal
 
       - uses: Swatinem/rust-cache@v1
