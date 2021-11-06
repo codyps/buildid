@@ -140,7 +140,7 @@ unsafe extern "C" fn phdr_cb(
     data: *mut libc::c_void,
 ) -> libc::c_int {
     let closure: &mut &mut dyn FnMut(&libc::dl_phdr_info, usize) -> libc::c_int =
-        core::mem::transmute(data);
+        &mut *(data as *mut &mut dyn for<'r> std::ops::FnMut(&'r libc::dl_phdr_info, usize) -> i32);
     let info = &*info;
 
     closure(info, size)
@@ -210,7 +210,7 @@ impl<'a> NoteIter<'a> {
 impl<'a> Iterator for NoteIter<'a> {
     type Item = Result<&'a Note, NoteError>;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.segment.len() == 0 {
+        if self.segment.is_empty() {
             return None;
         }
 
@@ -278,7 +278,7 @@ pub fn build_id() -> Option<&'static [u8]> {
                     Ok(v) => v,
                 };
                 if note.type_() == NT_GNU_BUILD_ID
-                    && note.desc().len() != 0
+                    && !note.desc().is_empty()
                     && note.name() == b"GNU\0"
                 {
                     res = Some(note.desc());
