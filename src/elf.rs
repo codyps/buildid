@@ -1,39 +1,8 @@
 use crate::align::align_up;
-use std::convert::TryInto;
-use std::mem;
-use std::mem::MaybeUninit;
-use thiserror::Error;
-use tracing::{event, Level};
-
-// NOTE: unix doesn't necessarily promise we'll have this section. We can use some functions to
-// dynamically look it up instead if we have issues.
-//
-// NOTE: this build id does not include any dynamically linked libraries. We can get those
-// build ids seperately by performing some dynamic lookups.
-//
-// NOTE: this works by adding a zero sized symbol to the end of the build-id section, but it's
-// not entirely clear why we're always at the end of the build-id section (instead of at the
-// beginning). We don't have any way to measure the size of the section, so we just have to
-// assume the hash size based on what is currently in common use (which is a 20 byte/160 bit
-// hash as I'm writing this).
-//
-// NOTE: current gcc enables build-id by default, but current clang does not. To use clang,
-// ensure one does `RUSTFLAGS='-C linker=clang -Clink-arg=-Wl,--build-id'` or similar.
-//
-// NOTE: If using a toolchain without build-id enabled, junk is returned (likely the content of
-// other note sections). We could do a small bit of validation by checking the note header.
-/*
-// This method only works if a build-id of exactly the right size is linked in. Otherwise, the
-// link fails or invalid data is accessed
-#[link_section = ".note.gnu.build-id"]
-static NOTE_GNU_BUILD_ID_END: [u8; 0] = [];
-
-const BUILD_ID_LEN: usize = 20;
-
-pub fn build_id() -> Option<&'static [u8]> {
-    Some(unsafe { core::slice::from_raw_parts(NOTE_GNU_BUILD_ID_END.as_ptr().sub(BUILD_ID_LEN), BUILD_ID_LEN) })
-}
-*/
+use core::mem;
+use core::mem::MaybeUninit;
+use core::{convert::TryInto, fmt};
+use log::error;
 
 // FIXME: dl_phdr_info references are actually unsafe here because of how glibc defines
 // dl_phdr_info (to have some fields present depending on the size provided (<glibc-2.4 omits
@@ -63,13 +32,25 @@ struct Note {
 
 const MIN_NOTE_SIZE: usize = mem::size_of::<usize>() * 3;
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 enum NoteError {
-    #[error("have {size} bytes, but need at least {MIN_NOTE_SIZE}")]
     MissingHeader { size: usize },
-
-    #[error("have {have} bytes, but need at least {need}")]
     Truncated { have: usize, need: usize },
+}
+
+impl fmt::Display for NoteError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MissingHeader { size } => write!(
+                f,
+                "have {} bytes, but need at least {}",
+                size, MIN_NOTE_SIZE
+            ),
+            Self::Truncated { have, need } => {
+                write!(f, "have {} bytes, but need at least {}", have, need)
+            }
+        }
+    }
 }
 
 impl Note {
@@ -83,7 +64,7 @@ impl Note {
     }
 
     fn from_bytes(data: &[u8]) -> Result<(&Self, &[u8]), NoteError> {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         if data.len() < u * 3 {
             return Err(NoteError::MissingHeader { size: data.len() });
         }
@@ -92,33 +73,33 @@ impl Note {
     }
 
     fn name_len(&self) -> usize {
-        u32::from_ne_bytes(self.data[..std::mem::size_of::<u32>()].try_into().unwrap()) as usize
+        u32::from_ne_bytes(self.data[..core::mem::size_of::<u32>()].try_into().unwrap()) as usize
     }
 
     fn desc_len(&self) -> usize {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         u32::from_ne_bytes(self.data[u..(u + u)].try_into().unwrap()) as usize
     }
 
     fn type_(&self) -> u32 {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         u32::from_ne_bytes(self.data[(u + u)..(u + u + u)].try_into().unwrap())
     }
 
     fn name(&self) -> &[u8] {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         let b = u * 3;
         &self.data[b..(b + self.name_len())]
     }
 
     fn desc(&self) -> &[u8] {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         let b = u * 3 + align_up(self.name_len(), Self::ALIGN);
         &self.data[b..(b + self.desc_len())]
     }
 
     fn split_trailing(&self) -> Result<(&Self, &[u8]), NoteError> {
-        let u = std::mem::size_of::<u32>();
+        let u = core::mem::size_of::<u32>();
         let end =
             u * 3 + align_up(self.name_len(), Self::ALIGN) + align_up(self.desc_len(), Self::ALIGN);
         if end > self.data.len() {
@@ -139,8 +120,8 @@ unsafe extern "C" fn phdr_cb(
     size: libc::size_t,
     data: *mut libc::c_void,
 ) -> libc::c_int {
-    let closure: &mut &mut dyn FnMut(&libc::dl_phdr_info, usize) -> libc::c_int =
-        &mut *(data as *mut &mut dyn for<'r> std::ops::FnMut(&'r libc::dl_phdr_info, usize) -> i32);
+    let closure: &mut &mut dyn FnMut(&libc::dl_phdr_info, usize) -> libc::c_int = &mut *(data
+        as *mut &mut dyn for<'r> core::ops::FnMut(&'r libc::dl_phdr_info, usize) -> i32);
     let info = &*info;
 
     closure(info, size)
@@ -200,7 +181,7 @@ impl<'a> NoteIter<'a> {
             let segment = unsafe {
                 // FIXME: consider p_memsz vs p_filesz question here.
                 // llvm appears to use filesz
-                std::slice::from_raw_parts(segment_base, phdr.p_filesz as usize)
+                core::slice::from_raw_parts(segment_base, phdr.p_filesz as usize)
             };
             Some(NoteIter { segment })
         }
@@ -272,7 +253,7 @@ pub fn build_id() -> Option<&'static [u8]> {
             for note in ni {
                 let note = match note {
                     Err(e) => {
-                        event!(Level::ERROR, "note program segment had invalid note {}", e);
+                        error!("note program segment had invalid note {}", e);
                         continue 'phdr;
                     }
                     Ok(v) => v,

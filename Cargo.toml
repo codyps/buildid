@@ -6,18 +6,20 @@ keywords = ["no_std"]
 license = "GPL-2.0-or-later OR CDDL-1.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
+[features]
+build-id-symbol-start-end = []
+build-id-section-inject = []
+build-id-custom-inject = []
+
 [dependencies]
-thiserror = "1"
-tracing = "0.1"
+log = { version = "0.4", no-default-features = true }
 
 [target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]
-# extra_traits: give me Debug or give me death
-libc = { version = "0.2", features = ["extra_traits"] }
+libc = { version = "0.2" }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["libloaderapi", "winnt", "dbghelp"] }
-lazy_static = "1"
 
 [dev-dependencies]
 env_logger = "*"
-tracing = { version = "*", features = ["log"] }
+tracing = { version = "0.1", features = ["log"] }
