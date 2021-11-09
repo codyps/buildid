@@ -20,16 +20,25 @@ jobs:
         with:
           toolchain: ${{ matrix.rust_version }}
           profile: minimal
+          components: clippy
 
       - uses: Swatinem/rust-cache@v1
 
       - run: cargo install cargo-hack
 
-      - name: Build
+      - name: Clippy
         uses: actions-rs/cargo@v1
         with:
           command: hack
-          args: --feature-powerset build --all-targets --all
+          args: --feature-powerset clippy -- -D warnings
+
+      - name: Build
+        # NOTE: we don't feature-powerset here because we need to provide
+        # symbols for some of the specific lookup mechanisms
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --all
 
       - name: Test
         uses: actions-rs/cargo@v1
