@@ -23,11 +23,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - run: cargo install cargo-hack
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:
-          command: build
-          args: --all-targets --all
+          command: hack
+          args: --feature-powerset build --all-targets --all
 
       - name: Test
         uses: actions-rs/cargo@v1
