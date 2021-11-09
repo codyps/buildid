@@ -22,7 +22,7 @@
 static NOTE_GNU_BUILD_ID_END: [u8; 0] = [];
 
 // 20 for GNU
-const BUILD_ID_LEN: usize = env!("BUILD_ID_LEN").parse().unwrap();
+const BUILD_ID_LEN: usize = konst::unwrap_ctx!(konst::primitive::parse_usize(env!("BUILD_ID_LEN")));
 
 pub fn build_id() -> Option<&'static [u8]> {
     Some(unsafe {

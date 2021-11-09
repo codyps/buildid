@@ -68,15 +68,31 @@
 //!  - Windows MSVC appears to enable build-id (CodeView GUID) by default, with no change needed.
 #![no_std]
 
-#[cfg(feature = "build-id-section-inject")]
+#[cfg(feature = "build-id-custom-inject")]
+#[path = "custom-inject.rs"]
+mod target;
+
+#[cfg(all(
+    feature = "build-id-section-inject",
+    not(feature = "build-id-custom-inject")
+))]
 #[path = "section-inject.rs"]
+mod target;
+
+#[cfg(all(
+    feature = "build-id-symbol-start-end",
+    not(feature = "build-id-section-inject"),
+    not(feature = "build-id-custom-inject"),
+))]
+#[path = "symbol-start-end.rs"]
 mod target;
 
 #[cfg(all(
     target_family = "unix",
     not(target_vendor = "apple"),
     not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end")
+    not(feature = "build-id-symbol-start-end"),
+    not(feature = "build-id-custom-inject")
 ))]
 #[path = "elf.rs"]
 mod target;
@@ -85,7 +101,8 @@ mod target;
     target_family = "unix",
     not(target_vendor = "apple"),
     not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end")
+    not(feature = "build-id-symbol-start-end"),
+    not(feature = "build-id-custom-inject")
 ))]
 mod align;
 
@@ -93,7 +110,8 @@ mod align;
     target_family = "unix",
     target_vendor = "apple",
     not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end")
+    not(feature = "build-id-symbol-start-end"),
+    not(feature = "build-id-custom-inject")
 ))]
 #[path = "mach.rs"]
 mod target;
@@ -101,7 +119,8 @@ mod target;
 #[cfg(all(
     target_family = "windows",
     not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end")
+    not(feature = "build-id-symbol-start-end"),
+    not(feature = "build-id-custom-inject")
 ))]
 #[path = "windows.rs"]
 mod target;
@@ -109,7 +128,8 @@ mod target;
 #[cfg(all(
     target_family = "wasm",
     not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end")
+    not(feature = "build-id-symbol-start-end"),
+    not(feature = "build-id-custom-inject")
 ))]
 mod target {
     pub fn build_id() -> Option<&'static [u8]> {

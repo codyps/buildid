@@ -1,18 +1,20 @@
 [package]
 name = "buildid"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 keywords = ["no_std"]
 license = "GPL-2.0-or-later OR CDDL-1.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
 [features]
 build-id-symbol-start-end = []
-build-id-section-inject = []
-build-id-custom-inject = []
+build-id-section-inject = ["konst"]
+build-id-custom-inject = ["cty"]
 
 [dependencies]
-log = { version = "0.4", no-default-features = true }
+log = { version = "0.4", default-features = false }
+cty = { version = "0.2", optional = true }
+konst = { version = "0.2", features = ["parsing_no_proc"], optional = true }
 
 [target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]
 libc = { version = "0.2" }
