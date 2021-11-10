@@ -7,7 +7,7 @@ license = "GPL-2.0-or-later OR CDDL-1.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 
 [features]
-build-id-symbol-start-end = []
+build-id-symbol-start-len = []
 build-id-section-inject = ["konst"]
 build-id-custom-inject = ["cty"]
 
@@ -24,4 +24,5 @@ winapi = { version = "0.3", features = ["libloaderapi", "winnt", "dbghelp"] }
 
 [dev-dependencies]
 env_logger = "*"
+hex = "0.4"
 tracing = { version = "0.1", features = ["log"] }

@@ -68,3 +68,26 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+  test-specific:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust_version: [beta]
+        script: [test-gnu-ld, test-gnu-ld-section-inject, test-gnu-ld-symbol-start-end]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust_version }}
+          profile: minimal
+
+      - uses: Swatinem/rust-cache@v1
+
+      - run: ./scripts/${{ matrix.script }}
+

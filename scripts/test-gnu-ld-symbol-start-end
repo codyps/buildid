@@ -1,0 +1,14 @@
+#! /bin/bash
+set -x
+set -euf -o pipefail
+
+cd "$(dirname "$0")/.."
+
+export BUILD_ID_TEST_EXPECTED="$(hexdump -n 32 -e '4/4 "%08X" 1 ""' /dev/urandom)"
+
+# Force a particular build-id for tests. Assumes gnu-compatible ld
+new_rustflags="-Clink-arg=-Wl,--build-id=0x$BUILD_ID_TEST_EXPECTED -Clink-arg=-T$PWD/scripts/build-id-start-end.lds"
+export RUSTFLAGS="${RUSTFLAGS:-} $new_rustflags"
+export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $new_rustflags"
+
+exec cargo test --features build-id-symbol-start-end
