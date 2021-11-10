@@ -13,6 +13,7 @@ jobs:
         rust_version: [beta]
     env:
       BUILD_ID_LEN: 20
+      RUST_LOG: trace
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -72,6 +73,8 @@ jobs:
           args: -- -D warnings
 
   test-specific:
+    env:
+      RUST_LOG: trace
     strategy:
       matrix:
         os: [ubuntu-latest]
