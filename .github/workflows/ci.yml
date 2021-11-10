@@ -36,6 +36,8 @@ jobs:
         # NOTE: we don't feature-powerset here because we need to provide
         # symbols for some of the specific lookup mechanisms
         uses: actions-rs/cargo@v1
+        env:
+          BUILD_ID_LEN: 20
         with:
           command: build
           args: --all-targets --all
