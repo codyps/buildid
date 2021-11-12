@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.0.0 (2021-11-12)
 
+### New Features
+
+ - Crate now exists! First release
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
