@@ -12,4 +12,4 @@ export RUSTFLAGS="${RUSTFLAGS:-} -Clink-arg=-Wl,--build-id=0x$BUILD_ID_TEST_EXPE
 len=${#BUILD_ID_TEST_EXPECTED}
 export BUILD_ID_LEN=$((len / 2))
 
-exec cargo test --features build-id-section-inject
+exec cargo test --features buildid-section-inject

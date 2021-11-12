@@ -11,4 +11,4 @@ new_rustflags="-Clink-arg=-Wl,--build-id=0x$BUILD_ID_TEST_EXPECTED -Clink-arg=-T
 export RUSTFLAGS="${RUSTFLAGS:-} $new_rustflags"
 export RUSTDOCFLAGS="${RUSTDOCFLAGS:-} $new_rustflags"
 
-exec cargo test --features build-id-symbol-start-end
+exec cargo test --features buildid-symbol-start-end
