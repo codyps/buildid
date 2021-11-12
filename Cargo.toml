@@ -8,6 +8,8 @@ description = "Examine the currently running executable to get its build-id or L
 repository = "https://github.com/jmesmon/buildid"
 documentation = "https://docs.rs/buildid"
 readme = "README.md"
+categories = ["no-std", "os"]
+
 
 # TODO: restrict crate content with include/exclude
 # TODO: include readme for crates.io page
