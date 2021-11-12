@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release.
+ - 10 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - make changelogs acceptable ([`533cf8f`](https://github.com/jmesmon/buildid/commit/533cf8fadd7dbb4c54b24b47582f1c293d0be083))
+    - Adjusting changelogs prior to release of buildid-linker-symbols v1.0.0 ([`5623d61`](https://github.com/jmesmon/buildid/commit/5623d61d4267c7fb4fa64fcc330f9911d3c1f861))
     - Adjusting changelogs prior to release of buildid-linker-symbols v1.0.0 ([`b5f3754`](https://github.com/jmesmon/buildid/commit/b5f3754ecb0751dc1348091069301f615e52edd7))
     - changelog gen ([`7319d79`](https://github.com/jmesmon/buildid/commit/7319d793750fe5b10fa800012f15388b6e0e0284))
     - categories ([`356daa2`](https://github.com/jmesmon/buildid/commit/356daa26e28a97ee7af79305a2980c766db987d0))
