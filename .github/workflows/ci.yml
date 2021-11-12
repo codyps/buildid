@@ -38,16 +38,26 @@ jobs:
       - name: Build
         # NOTE: we don't feature-powerset here because we need to provide
         # symbols for some of the specific lookup mechanisms
+        # NOTE: we don't build the entire workspace because
+        # buildid-linker-symbols does not work on all platforms (for example,
+        # it fails on macos)
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all-targets --all
+          args: --all-targets
 
       - name: Test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-targets --all
+          args: --all-targets
+
+      - name: Test (GNU extras)
+        uses: actions-rs/cargo@v1
+        if: ${{ matrix.os }} == ubuntu-latest
+        with:
+          command: test
+          args: -p buildid-tests-linker-symbols
 
   check:
     runs-on: ubuntu-latest
