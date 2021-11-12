@@ -1,0 +1,12 @@
+status = [
+	"Build and test (ubuntu-latest, beta)",
+	"Build and test (windows-latest, beta)",
+	"Build and test (macos-latest, beta)",
+	"check",
+	"test-specific (ubuntu-latest, beta, test-gnu-ld)",
+	"test-specific (ubuntu-latest, beta, test-gnu-ld-symbol-start-end)",
+	"test-specific (ubuntu-latest, beta, test-gnu-ld-section-inject)",
+]
+cut_body_after = "---"
+delete_merged_branches = true
+
