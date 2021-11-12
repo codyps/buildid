@@ -8,5 +8,7 @@ edition = "2021"
 
 [dev-dependencies]
 buildid = { version = "*", path = "..", features = ["buildid-symbol-start-end"] }
+# NOTE: we avoid using the feature on buildid to pull this in so that workspace builds work
+buildid-linker-symbols = { version = "*", path = "../buildid-linker-symbols" }
 hex = "*"
 env_logger = "*"

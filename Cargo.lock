@@ -42,10 +42,11 @@ name = "buildid-linker-symbols"
 version = "1.0.0"
 
 [[package]]
-name = "buildid-tests"
+name = "buildid-tests-linker-symbols"
 version = "0.1.0"
 dependencies = [
  "buildid",
+ "buildid-linker-symbols",
  "env_logger",
  "hex",
 ]
