@@ -32,3 +32,6 @@ hex = "0.4"
 tracing = { version = "0.1", features = ["log"] }
 
 [workspace]
+members = [
+	'buildid-tests-linker-symbols'
+]

@@ -1,0 +1,12 @@
+[package]
+name = "buildid-tests-linker-symbols"
+version = "0.1.0"
+description = "Seperate test crate for buildid-linker-symbols to avoid recursive deps"
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+buildid = { version = "*", path = "..", features = ["buildid-symbol-start-end"] }
+hex = "*"
+env_logger = "*"

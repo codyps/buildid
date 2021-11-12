@@ -9,8 +9,3 @@ description = "Configure the linker to support buildid crate's \"buildid-symbol-
 include = ["**.rs"]
 
 [dependencies]
-
-[dev-dependencies]
-buildid = { version = "*", path = "..", features = ["buildid-symbol-start-end"] }
-hex = "*"
-env_logger = "*"
