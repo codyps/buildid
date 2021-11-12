@@ -1,4 +1,4 @@
-//! Examine the build-id and similar values for the running executable
+//! Examine the build-id and similar values for your library or executable
 //!
 //! ```
 //! println!("{:?}", buildid::build_id())
@@ -15,36 +15,52 @@
 //! build-id is also used by `mesa` as a key component in their caching of shaders (changes in the
 //! build-id cause the cache to be discarded).
 //!
+//! Executables and shared objects contain build-ids. Using `buildid::build_id()` will return the
+//! build-id for the object that includes `buildid` (this crate). For example, if you write a
+//! shared object (shared library) using this crate, and provide a way to get the build-id in it's
+//! external API, that call will return the build-id of the shared object/library (not the
+//! executable).
+//!
 //! By default, the `buildid` crate will pick the best build-id lookup function it can for your
 //! platform. If one is not avaliable, it may fail to compile. If you have a custom build-id lookup
 //! mechanism you want to tell `buildid` about, enabling one of the features may help.
 //!
-//! # Features
+//! # Optional Features
 //!
 //! For all of the build-id lookup customization features, we recommend only setting them in
 //! top-level crates than have a complete understanding of the final link step for the executable.
 //!
-//!  - `buildid-section-inject`: if enabled, inject our own symbol into the section where build id
-//!    is expected to be located, and use the build-time environment variable `BUILD_ID_SIZE` to
-//!    determine how many bytes to read. This method will only function on some platforms
-//!    (basically: GNU ones). Note that `BUILD_ID_SIZE` must be set correctly, and differs for GNU
-//!    ld (bfd) and LLVM lld. This method takes presdence over the default lookup methods if
-//!    enabled.
-//!  - `buildid-symbol-start-end`: if enabled, assume the presense of 2 symbols named "__build_id_start" and
-//!    "__build_id_end", and use these to find the build-id. Normally, one can provide the symbols
-//!    by using a custom ldscript (linker script). This method takes precedence over automatically
-//!    enable build-id lookup methods, and over `buildid-section-inject`. Enabling the feature
-//!    `buildid-linker-symbols` automatically inserts a ldscript into the build to provide these
-//!    symbols for gnu-like linkers (gnu ld.bfd, ld.gold, and llvm lld).
-//!  - `buildid-custom-inject`: if enabled, assume that a function `int build_id__get(unsigned
-//!    char **build_id, size_t *len)` is provided (with C linkage) that can locate and return the
-//!    build-id. The `build_id__get` must return `1` if a build-id is located (and modify the
-//!    `build_id` and `len` arguments to point to the memory containing the build-id and to contain
-//!    the number of bytes in the build-id respectively), return `0` if no build-id exists, and
-//!    return a negative error code if an unexpected error occured. This method takes precedence
-//!    over all other build-id lookup methods (if enabled).
-//!  - `buildid-linker-symbols`: if enabled, depend on the `buildid-linker-symbols` crate to
-//!    automatically create the symbols needed by `buildid-symbol-start-end` on gnu-like linkers.
+//! ## `buildid-section-inject`
+//!
+//! When enabled, inject our own symbol into the section where build id is expected to be located,
+//! and use the build-time environment variable `BUILD_ID_SIZE` to determine how many bytes to
+//! read. This method will only function on some platforms (basically: GNU ones). Note that
+//! `BUILD_ID_SIZE` must be set correctly, and differs for GNU ld (bfd) and LLVM lld. This method
+//! takes presdence over the default lookup methods if enabled.
+//!
+//! ## `buildid-symbol-start-end`
+//!
+//! When enabled, assume the presense of 2 symbols named "__build_id_start" and "__build_id_end", and
+//! use these to find the build-id. Normally, one can provide the symbols by using a custom
+//! ldscript (linker script). This method takes precedence over automatically enable build-id
+//! lookup methods, and over `buildid-section-inject`. Enabling the feature
+//! `buildid-linker-symbols` automatically inserts a ldscript into the build to provide these
+//! symbols for gnu-like linkers (gnu ld.bfd, ld.gold, and llvm lld).
+//!
+//! ## `buildid-custom-inject`
+//!
+//! When enabled, assume that a function `int build_id__get(unsigned char **build_id, size_t *len)`
+//! is provided (with C linkage) that can locate and return the build-id. The `build_id__get` must
+//! return `1` if a build-id is located (and modify the `build_id` and `len` arguments to point to
+//! the memory containing the build-id and to contain the number of bytes in the build-id
+//! respectively), return `0` if no build-id exists, and return a negative error code if an
+//! unexpected error occured. This method takes precedence over all other build-id lookup methods
+//! (if enabled).
+//!
+//! ## `buildid-linker-symbols`
+//!
+//! When enabled, depend on the `buildid-linker-symbols` crate to automatically create the symbols
+//! needed by `buildid-symbol-start-end` on gnu-like linkers.
 //!
 //! # Platform Details
 //!
@@ -146,4 +162,10 @@ mod target {
 /// If present, return the build-id or platform equivalent
 pub fn build_id() -> Option<&'static [u8]> {
     target::build_id()
+}
+
+#[cfg(doctest)]
+mod test_readme {
+    #[doc = include_str!("../README.md")]
+    extern "C" {}
 }

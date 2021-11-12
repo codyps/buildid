@@ -7,6 +7,7 @@ status = [
 	"test-specific (ubuntu-latest, beta, test-gnu-ld-symbol-start-end)",
 	"test-specific (ubuntu-latest, beta, test-gnu-ld-section-inject)",
 	"ci/circleci: lint-test-build",
+	".github/dependabot.yml",
 ]
 cut_body_after = "---"
 delete_merged_branches = true
