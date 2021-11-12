@@ -3,6 +3,7 @@ name = "buildid-tests-linker-symbols"
 version = "0.1.0"
 description = "Seperate test crate for buildid-linker-symbols to avoid recursive deps"
 edition = "2021"
+publish = false
 
 [dependencies]
 
