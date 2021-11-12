@@ -33,7 +33,7 @@ libc = { version = "0.2" }
 winapi = { version = "0.3", features = ["libloaderapi", "winnt", "dbghelp"] }
 
 [dev-dependencies]
-env_logger = "*"
+env_logger = "0.9"
 hex = "0.4"
 tracing = { version = "0.1", features = ["log"] }
 
