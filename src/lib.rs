@@ -24,29 +24,34 @@
 //! For all of the build-id lookup customization features, we recommend only setting them in
 //! top-level crates than have a complete understanding of the final link step for the executable.
 //!
-//!  - `build-id-section-inject`: if enabled, inject our own symbol into the section where build id
+//!  - `buildid-section-inject`: if enabled, inject our own symbol into the section where build id
 //!    is expected to be located, and use the build-time environment variable `BUILD_ID_SIZE` to
 //!    determine how many bytes to read. This method will only function on some platforms
 //!    (basically: GNU ones). Note that `BUILD_ID_SIZE` must be set correctly, and differs for GNU
 //!    ld (bfd) and LLVM lld. This method takes presdence over the default lookup methods if
 //!    enabled.
-//!  - `build-id-symbol-start-end`: if enabled, assume the presense of 2 symbols named "__build_id_start" and
+//!  - `buildid-symbol-start-end`: if enabled, assume the presense of 2 symbols named "__build_id_start" and
 //!    "__build_id_end", and use these to find the build-id. Normally, one can provide the symbols
 //!    by using a custom ldscript (linker script). This method takes precedence over automatically
-//!    enable build-id lookup methods, and over `build-id-section-inject`.
-//!  - `build-id-custom-inject`: if enabled, assume that a function `int build_id__get(unsigned
+//!    enable build-id lookup methods, and over `buildid-section-inject`. Enabling the feature
+//!    `buildid-linker-symbols` automatically inserts a ldscript into the build to provide these
+//!    symbols for gnu-like linkers (gnu ld.bfd, ld.gold, and llvm lld).
+//!  - `buildid-custom-inject`: if enabled, assume that a function `int build_id__get(unsigned
 //!    char **build_id, size_t *len)` is provided (with C linkage) that can locate and return the
 //!    build-id. The `build_id__get` must return `1` if a build-id is located (and modify the
 //!    `build_id` and `len` arguments to point to the memory containing the build-id and to contain
 //!    the number of bytes in the build-id respectively), return `0` if no build-id exists, and
 //!    return a negative error code if an unexpected error occured. This method takes precedence
 //!    over all other build-id lookup methods (if enabled).
+//!  - `buildid-linker-symbols`: if enabled, depend on the `buildid-linker-symbols` crate to
+//!    automatically create the symbols needed by `buildid-symbol-start-end` on gnu-like linkers.
 //!
 //! # Platform Details
 //!
 //!  - On unix variants other than those with apple as the vendor, the `.note.gnu.build-id` is
 //!    used. Note that GNU LD and LLD generate different sized build-ids using different hash
-//!    functions.
+//!    functions. Unless additional features are enabled, the `.note.gnu.build-id` is located via
+//!    `dl_iterate_phdr()`.
 //!  - On Apple unix variants (MacOS), the `LC_UUID` (loader command uuid) is returned directly as
 //!    a slice.
 //!  - On windows, the module is parsed for a CodeView descriptor containing a GUID (which is
