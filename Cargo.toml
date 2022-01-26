@@ -1,9 +1,9 @@
 [package]
 name = "buildid"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 keywords = ["no_std", "build-id"]
-license = "GPL-2.0-or-later OR CDDL-1.0"
+license = "MPL-2.0"
 description = "Examine the currently running executable to get its build-id or LC_UUID"
 repository = "https://github.com/jmesmon/buildid"
 documentation = "https://docs.rs/buildid"

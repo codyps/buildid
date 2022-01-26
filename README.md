@@ -27,16 +27,10 @@ mechanism you want to tell `buildid` about, enabling one of the features may hel
 
 ## License
 
-Licensed under either of
- * [CDDL-1.0](https://opensource.org/licenses/cddl1.txt) or
- * [GPL-2 or later](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-
-At your option.
+Licensed under Mozilla Public License 2.0
 
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you shall be dual licensed as above, without any
-additional terms or conditions. You further grant the right to the Initial
-Developer to license the submitted contribution under additional licenses that
-serve similar purposes to the ones currently listed above.
+for inclusion in the work by you shall be licensed as above, without any
+additional terms or conditions.
