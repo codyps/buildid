@@ -1,6 +1,6 @@
 /// Return the closest value larger than `value` which is a multiple of `align`
 pub fn align_up(value: usize, align: usize) -> usize {
-    assert!(!(align == 0), "align is zero");
+    assert_ne!(align, 0, "align is zero");
 
     (value + align - 1) / align * align
 }
