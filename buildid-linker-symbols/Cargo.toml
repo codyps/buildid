@@ -1,9 +1,9 @@
 [package]
 name = "buildid-linker-symbols"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 keywords = ["no_std", "build-id"]
-license = "GPL-2.0-or-later OR CDDL-1.0"
+license = "MPL-2.0"
 description = "Configure the linker to support buildid crate's \"buildid-symbol-start-end\" feature"
 include = ["**.rs"]
 repository = "https://github.com/jmesmon/buildid"
