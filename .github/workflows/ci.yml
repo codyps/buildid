@@ -90,7 +90,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         rust_version: [beta]
-        script: [test-gnu-ld, test-gnu-ld-section-inject, test-gnu-ld-symbol-start-end]
+        script: [test-gnu-ld, test-gnu-ld-section-inject, test-gnu-ld-symbol-start-end, test-gnu-ld-symbol-start-end-no-lds]
 
     runs-on: ${{ matrix.os }}
     steps:

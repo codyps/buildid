@@ -9,4 +9,4 @@ export BUILD_ID_TEST_EXPECTED="$(hexdump -n 32 -e '4/4 "%08X" 1 ""' /dev/urandom
 # Force a particular build-id for tests. Assumes gnu-compatible ld
 export RUSTFLAGS="${RUSTFLAGS:-} -Clink-arg=-Wl,--build-id=0x$BUILD_ID_TEST_EXPECTED"
 
-exec cargo test
+exec cargo test "$@"

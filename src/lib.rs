@@ -30,22 +30,18 @@
 //! For all of the build-id lookup customization features, we recommend only setting them in
 //! top-level crates than have a complete understanding of the final link step for the executable.
 //!
-//! ## `buildid-section-inject`
-//!
-//! When enabled, inject our own symbol into the section where build id is expected to be located,
-//! and use the build-time environment variable `BUILD_ID_SIZE` to determine how many bytes to
-//! read. This method will only function on some platforms (basically: GNU ones). Note that
-//! `BUILD_ID_SIZE` must be set correctly, and differs for GNU ld (bfd) and LLVM lld. This method
-//! takes presdence over the default lookup methods if enabled.
-//!
 //! ## `buildid-symbol-start-end`
 //!
 //! When enabled, assume the presense of 2 symbols named "__build_id_start" and "__build_id_end", and
-//! use these to find the build-id. Normally, one can provide the symbols by using a custom
-//! ldscript (linker script). This method takes precedence over automatically enable build-id
-//! lookup methods, and over `buildid-section-inject`. Enabling the feature
-//! `buildid-linker-symbols` automatically inserts a ldscript into the build to provide these
-//! symbols for gnu-like linkers (gnu ld.bfd, ld.gold, and llvm lld).
+//! use these to find the build-id. For gnu linkers, these symbols exist and can be used
+//! automatically.
+//!
+//! If they aren't present for some reason, one can provide the symbols by using a custom
+//! ldscript (linker script). See `buildid-linker-symbols` for a linker script mechanism to provide
+//! these.
+//!
+//! This method takes precedence over automatically enable build-id
+//! lookup methods, and over `buildid-section-inject`.
 //!
 //! ## `buildid-custom-inject`
 //!
@@ -56,6 +52,18 @@
 //! respectively), return `0` if no build-id exists, and return a negative error code if an
 //! unexpected error occured. This method takes precedence over all other build-id lookup methods
 //! (if enabled).
+//!
+//! ## `buildid-section-inject`
+//!
+//! When enabled, inject our own symbol into the section where build id is expected to be located,
+//! and use the build-time environment variable `BUILD_ID_SIZE` to determine how many bytes to
+//! read. This method will only function on some platforms (basically: GNU ones). Note that
+//! `BUILD_ID_SIZE` must be set correctly, and differs for GNU ld (bfd) and LLVM lld.
+//!
+//! Note that in all cases this works, `buildid-symbol-start-end` is likely to work and be more
+//! reliable.
+//!
+//! This method takes presdence over the default lookup methods if enabled.
 //!
 //! ## `buildid-linker-symbols`
 //!
