@@ -1,6 +1,6 @@
 [package]
 name = "buildid"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 keywords = ["no_std", "build-id"]
 license = "MPL-2.0"
