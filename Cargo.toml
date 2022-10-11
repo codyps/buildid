@@ -18,14 +18,14 @@ include = ["**/*.rs", "README.md"]
 [features]
 buildid-symbol-start-end = []
 buildid-section-inject = ["konst"]
-buildid-custom-inject = ["cty"]
+buildid-custom-inject = []
 
 [dependencies]
 buildid-linker-symbols = { version = "1.0", optional = true, path = 'buildid-linker-symbols' }
 log = { version = "0.4", default-features = false }
-cty = { version = "0.2", optional = true }
 konst = { version = "0.2", features = ["parsing_no_proc"], optional = true }
 
+# NOTE: we only need libc if we don't enable one of the overriding features
 [target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]
 libc = { version = "0.2" }
 

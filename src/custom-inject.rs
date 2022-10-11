@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 extern "C" {
-    fn build_id__get(build_id: *mut *const u8, len: *mut usize) -> cty::c_int;
+    fn build_id__get(build_id: *mut *const u8, len: *mut usize) -> core::ffi::c_int;
 }
 
 pub fn build_id() -> Option<&'static [u8]> {
