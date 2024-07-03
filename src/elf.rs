@@ -2,7 +2,7 @@ use crate::align::align_up;
 use core::mem;
 use core::mem::MaybeUninit;
 use core::{convert::TryInto, fmt};
-use log::error;
+use log::{debug, error, warn};
 
 // FIXME: dl_phdr_info references are actually unsafe here because of how glibc defines
 // dl_phdr_info (to have some fields present depending on the size provided (<glibc-2.4 omits
@@ -210,8 +210,10 @@ pub fn build_id() -> Option<&'static [u8]> {
     // find the shared object that contains our own `build_id()` fn (this fn itself)
     let data = {
         let mut data = MaybeUninit::uninit();
-        if unsafe { libc::dladdr(&build_id as *const _ as *mut _, data.as_mut_ptr()) } == 0 {
+        let addr = build_id as *const libc::c_void;
+        if unsafe { libc::dladdr(addr, data.as_mut_ptr()) } == 0 {
             // TODO: consider if we have fallback options here
+            error!("dladdr failed to find our own symbol");
             return None;
         }
 
@@ -235,12 +237,22 @@ pub fn build_id() -> Option<&'static [u8]> {
 
         let map_start = match map_start {
             Some(v) => v,
-            None => return -1,
+            None => {
+                debug!(
+                    "no PT_LOAD segment found in object {:?}, skipping",
+                    info.dlpi_name
+                );
+                return 0;
+            }
         };
 
-        // check if this phdr is the one that contains our fn.
+        // check if this phdr (map_start) is the one that contains our fn (data.dli_fbase)
         if map_start != data.dli_fbase as u64 {
-            return -1;
+            debug!(
+                "map_start ({:?}) != data.dli_fbase ({:?}), skipping",
+                map_start, data.dli_fbase
+            );
+            return 0;
         }
 
         'phdr: for phdr in PhdrIter::from(info) {
@@ -253,7 +265,7 @@ pub fn build_id() -> Option<&'static [u8]> {
             for note in ni {
                 let note = match note {
                     Err(e) => {
-                        error!("note program segment had invalid note {}", e);
+                        warn!("note program segment had invalid note {}", e);
                         continue 'phdr;
                     }
                     Ok(v) => v,
