@@ -30,7 +30,7 @@ the [docs](https://docs.rs/buildid) for details). If you have another platform
 that needs support, send a PR!
 
 By default, the `buildid` crate will pick the best build-id lookup function it
-can for your platform. If one is not avaliable, it may fail to compile. If you
+can for your platform. If one is not available, it may fail to compile. If you
 have a custom build-id lookup mechanism you want to tell `buildid` about,
 enabling one of the features may help.
 

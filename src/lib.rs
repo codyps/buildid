@@ -22,7 +22,7 @@
 //! executable).
 //!
 //! By default, the `buildid` crate will pick the best build-id lookup function it can for your
-//! platform. If one is not avaliable, it may fail to compile. If you have a custom build-id lookup
+//! platform. If one is not available, it may fail to compile. If you have a custom build-id lookup
 //! mechanism you want to tell `buildid` about, enabling one of the features may help.
 //!
 //! # Optional Features
@@ -32,7 +32,7 @@
 //!
 //! ## `buildid-symbol-start-end`
 //!
-//! When enabled, assume the presense of 2 symbols named "__build_id_start" and "__build_id_end", and
+//! When enabled, assume the presence of 2 symbols named "__build_id_start" and "__build_id_end", and
 //! use these to find the build-id. For gnu linkers, these symbols exist and can be used
 //! automatically.
 //!
@@ -50,7 +50,7 @@
 //! return `1` if a build-id is located (and modify the `build_id` and `len` arguments to point to
 //! the memory containing the build-id and to contain the number of bytes in the build-id
 //! respectively), return `0` if no build-id exists, and return a negative error code if an
-//! unexpected error occured. This method takes precedence over all other build-id lookup methods
+//! unexpected error occurred. This method takes precedence over all other build-id lookup methods
 //! (if enabled).
 //!
 //! ## `buildid-section-inject`
@@ -63,7 +63,7 @@
 //! Note that in all cases this works, `buildid-symbol-start-end` is likely to work and be more
 //! reliable.
 //!
-//! This method takes presdence over the default lookup methods if enabled.
+//! This method takes precedence over the default lookup methods if enabled.
 //!
 //! ## `buildid-linker-symbols`
 //!
