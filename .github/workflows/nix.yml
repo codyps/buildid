@@ -1,0 +1,68 @@
+name: check with nix
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-nix:
+    name: Check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Check Nixpkgs inputs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
+
+      # Nix-specific logic begins here
+      - name: Check Rust formatting
+        run: |
+          nix develop --command \
+            cargo fmt --check
+      - name: Audit Rust code
+        run: |
+          nix develop --command \
+            cargo-deny check
+      - name: editorconfig check
+        run: |
+          nix develop --command \
+            eclint \
+              -exclude "Cargo.lock"
+      - name: Check spelling
+        run: |
+          nix develop --command \
+            codespell \
+              --skip target,.git \
+              --ignore-words-list crate
+
+  build-and-test-nix:
+    needs: check-nix
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-12]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Set up Rust cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test
+        run: |
+          nix develop --command \
+            cargo test
