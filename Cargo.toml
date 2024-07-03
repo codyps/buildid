@@ -24,6 +24,7 @@ buildid-custom-inject = []
 buildid-linker-symbols = { version = "1.0", optional = true, path = 'buildid-linker-symbols' }
 log = { version = "0.4", default-features = false }
 konst = { version = "0.2", features = ["parsing_no_proc"], optional = true }
+cfg-if = "1.0.0"
 
 # NOTE: we only need libc if we don't enable one of the overriding features
 [target.'cfg(all(unix, not(target_vendor = "apple")))'.dependencies]

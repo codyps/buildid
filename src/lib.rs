@@ -97,73 +97,39 @@
 //!  - Windows MSVC appears to enable build-id (CodeView GUID) by default, with no change needed.
 #![no_std]
 
-#[cfg(feature = "build-id-custom-inject")]
-#[path = "custom-inject.rs"]
-mod target;
-
-#[cfg(all(
-    feature = "build-id-section-inject",
-    not(feature = "build-id-custom-inject")
-))]
-#[path = "section-inject.rs"]
-mod target;
-
-#[cfg(all(
-    feature = "build-id-symbol-start-end",
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-custom-inject"),
-))]
-#[path = "symbol-start-end.rs"]
-mod target;
-
-#[cfg(all(
-    target_family = "unix",
-    not(target_vendor = "apple"),
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end"),
-    not(feature = "build-id-custom-inject")
-))]
-#[path = "elf.rs"]
-mod target;
-
-#[cfg(all(
-    target_family = "unix",
-    not(target_vendor = "apple"),
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end"),
-    not(feature = "build-id-custom-inject")
-))]
-mod align;
-
-#[cfg(all(
-    target_family = "unix",
-    target_vendor = "apple",
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end"),
-    not(feature = "build-id-custom-inject")
-))]
-#[path = "mach.rs"]
-mod target;
-
-#[cfg(all(
-    target_family = "windows",
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end"),
-    not(feature = "build-id-custom-inject")
-))]
-#[path = "windows.rs"]
-mod target;
-
-#[cfg(all(
-    target_family = "wasm",
-    not(feature = "build-id-section-inject"),
-    not(feature = "build-id-symbol-start-end"),
-    not(feature = "build-id-custom-inject")
-))]
-mod target {
-    pub fn build_id() -> Option<&'static [u8]> {
-        // not sure how to implement this right now. need to introspect the wasm object in some way
-        None
+cfg_if::cfg_if! {
+    if #[cfg(feature = "buildid-custom-inject")] {
+        #[path = "custom-inject.rs"]
+        mod target;
+    } else if  #[cfg(feature = "buildid-section-inject")] {
+        #[path = "section-inject.rs"]
+        mod target;
+    } else if #[cfg(feature = "buildid-symbol-start-end")] {
+        #[path = "symbol-start-end.rs"]
+        mod target;
+    } else if #[cfg(all(
+        target_family = "unix",
+        not(target_vendor = "apple"),
+    ))] {
+        #[path = "elf.rs"]
+        mod target;
+        mod align;
+    } else if #[cfg(all(
+        target_family = "unix",
+        target_vendor = "apple",
+    ))] {
+        #[path = "mach.rs"]
+        mod target;
+    } else if #[cfg(target_family = "windows")] {
+        #[path = "windows.rs"]
+        mod target;
+    } else if #[cfg(target_family = "wasm")] {
+        mod target {
+            pub fn build_id() -> Option<&'static [u8]> {
+                // not sure how to implement this right now. need to introspect the wasm object in some way
+                None
+            }
+        }
     }
 }
 

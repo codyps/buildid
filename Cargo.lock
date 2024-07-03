@@ -27,6 +27,7 @@ name = "buildid"
 version = "1.0.1"
 dependencies = [
  "buildid-linker-symbols",
+ "cfg-if",
  "env_logger",
  "hex",
  "konst",
