@@ -22,7 +22,6 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust_version }}
-          profile: minimal
           components: clippy
 
       - run: cargo install cargo-hack
@@ -53,7 +52,6 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: beta
           components: rustfmt, clippy
 
@@ -78,6 +76,5 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust_version }}
-          profile: minimal
 
       - run: ./scripts/${{ matrix.script }}
