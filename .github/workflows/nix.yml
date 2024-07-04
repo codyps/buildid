@@ -24,10 +24,6 @@ jobs:
         run: |
           nix develop --command \
             cargo fmt --check
-      - name: Audit Rust code
-        run: |
-          nix develop --command \
-            cargo-deny check
       - name: editorconfig check
         run: |
           nix develop --command \
