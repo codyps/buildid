@@ -2,7 +2,7 @@
 // dynamically look it up instead if we have issues.
 //
 // NOTE: this build id does not include any dynamically linked libraries. We can get those
-// build ids seperately by performing some dynamic lookups.
+// build ids separately by performing some dynamic lookups.
 //
 // NOTE: this works by adding a zero sized symbol to the end of the build-id section, but it's
 // not entirely clear why we're always at the end of the build-id section (instead of at the
