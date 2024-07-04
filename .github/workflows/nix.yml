@@ -63,6 +63,12 @@ jobs:
             target/
           key: cargo-${{ matrix.os }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Test
+        if: "matrix.os == 'ubuntu-22.04'"
         run: |
           nix develop --command \
             env RUSTFLAGS="-Clink-arg=-Wl,--build-id" cargo test
+      - name: Test
+        if: "matrix.os != 'ubuntu-22.04'"
+        run: |
+          nix develop --command \
+            cargo test
