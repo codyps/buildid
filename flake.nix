@@ -67,6 +67,7 @@
             cargo-outdated
             cargo-udeps
 
+            cargo-deny
             eclint
             codespell
           ] ++ lib.optional stdenv.isDarwin [
