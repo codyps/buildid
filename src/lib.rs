@@ -97,6 +97,12 @@
 //!  - Windows MSVC appears to enable build-id (CodeView GUID) by default, with no change needed.
 #![no_std]
 
+#[cfg(test)]
+extern crate alloc;
+
+mod align;
+mod constparse;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "buildid-custom-inject")] {
         #[path = "custom-inject.rs"]
@@ -113,7 +119,6 @@ cfg_if::cfg_if! {
     ))] {
         #[path = "elf.rs"]
         mod target;
-        mod align;
     } else if #[cfg(all(
         target_family = "unix",
         target_vendor = "apple",
