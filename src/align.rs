@@ -1,5 +1,4 @@
 /// Return the closest value larger than `value` which is a multiple of `align`
-#[allow(dead_code)]
 pub fn align_up(value: usize, align: usize) -> usize {
     assert_ne!(align, 0, "align is zero");
 

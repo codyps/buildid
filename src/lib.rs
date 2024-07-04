@@ -100,10 +100,26 @@
 #[cfg(test)]
 extern crate alloc;
 
-mod align;
-mod constparse;
+cfg_if::cfg_if! {
+    if #[cfg(any(test,
+            all(
+                target_family = "unix",
+                not(target_vendor = "apple"),
+            )
+        ))] {
+        mod align;
+    }
+}
 
 cfg_if::cfg_if! {
+    if #[cfg(any(test,
+            feature = "buildid-section-inject"))] {
+        mod constparse;
+    }
+}
+
+cfg_if::cfg_if! {
+
     if #[cfg(feature = "buildid-custom-inject")] {
         #[path = "custom-inject.rs"]
         mod target;

@@ -85,7 +85,6 @@ const fn try_parse_usize(b: &str) -> Result<usize, ParseIntError> {
     Ok(result)
 }
 
-#[allow(dead_code)]
 pub(crate) const fn parse_usize(b: &str) -> usize {
     match try_parse_usize(b) {
         Ok(v) => v,
@@ -97,11 +96,11 @@ pub(crate) const fn parse_usize(b: &str) -> usize {
 fn test_parse() {
     use alloc::string::ToString;
     for i in 0..500 {
-        assert_eq!(parse_usize(&i.to_string()).unwrap(), i);
+        assert_eq!(parse_usize(&i.to_string()), i);
     }
 
     for bits in 0usize..core::mem::size_of::<usize>() * 8 {
         let i = (1 << bits) - 1;
-        assert_eq!(parse_usize(&i.to_string()).unwrap(), i);
+        assert_eq!(parse_usize(&i.to_string()), i);
     }
 }
