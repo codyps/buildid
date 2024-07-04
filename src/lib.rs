@@ -113,7 +113,11 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
     if #[cfg(any(test,
-            feature = "buildid-section-inject"))] {
+            all(
+                not(feature = "buildid-custom-inject"),
+                feature = "buildid-section-inject")
+            )
+        )] {
         mod constparse;
     }
 }
