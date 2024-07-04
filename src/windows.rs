@@ -1,11 +1,18 @@
-use log::error;
-use winapi::um::dbghelp::ImageNtHeader;
+//
+// - https://deplinenoise.wordpress.com/2013/06/14/getting-your-pdb-name-from-a-running-executable-windows/
+// - `link.exe /DUMP /HEADERS .\target\debug\examples\simple.exe`
+//    - includes the `IMAGE_DEBUG_DIRECTORY` section pretty printed
+
+use log::{debug, error};
 use winapi::um::libloaderapi::GetModuleHandleA;
 use winapi::um::winnt::IMAGE_DEBUG_DIRECTORY;
 use winapi::um::winnt::IMAGE_DEBUG_TYPE_CODEVIEW;
-use winapi::um::winnt::IMAGE_DIRECTORY_ENTRY_DEBUG;
+use winapi::um::winnt::{
+    IMAGE_DIRECTORY_ENTRY_DEBUG, IMAGE_DOS_HEADER, IMAGE_FILE_HEADER, IMAGE_OPTIONAL_HEADER,
+};
 
 #[allow(bad_style)]
+#[repr(C)]
 struct CV_INFO_PDB70 {
     cv_signature: u32,
     signature: [u8; 16],
@@ -16,25 +23,54 @@ struct CV_INFO_PDB70 {
 pub fn build_id() -> Option<&'static [u8]> {
     let module = unsafe { GetModuleHandleA(core::ptr::null_mut()) };
 
-    let image_nt_header = unsafe { &*ImageNtHeader(module as _) };
+    let dos_header = unsafe { &*(module as *const IMAGE_DOS_HEADER) };
+    let file_header = unsafe {
+        &*((module as usize + dos_header.e_lfanew as usize + 4) as *const IMAGE_FILE_HEADER)
+    };
 
-    let opt_header = &image_nt_header.OptionalHeader;
+    debug!(
+        "size of optional header: {:?}, {:?}",
+        file_header.SizeOfOptionalHeader,
+        core::mem::size_of::<IMAGE_OPTIONAL_HEADER>()
+    );
+
+    let opt_header = unsafe {
+        &*((file_header as *const _ as usize + core::mem::size_of::<IMAGE_FILE_HEADER>())
+            as *const IMAGE_OPTIONAL_HEADER)
+    };
+
+    if opt_header.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_DEBUG.into() {
+        error!("IMAGE_DIRECTORY_ENTRY_DEBUG not included in executable");
+        return None;
+    }
+
     let dir = &opt_header.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG as usize];
     if dir.Size == 0 {
         error!("IMAGE_DIRECTORY_ENTRY_DEBUG is empty");
         return None;
     }
 
+    debug!(
+        "IMAGE_DIRECTORY_ENTRY_DEBUG: VA={:?}, SIZE={:?}",
+        dir.VirtualAddress, dir.Size
+    );
+
     let dbg_dir = unsafe {
         &*((module as usize + dir.VirtualAddress as usize) as *const IMAGE_DEBUG_DIRECTORY)
     };
 
+    // TODO: multiple debug directories can be present, we only examine the
+    // first one which is always the one we want. We could scan all of them.
     if dbg_dir.Type == IMAGE_DEBUG_TYPE_CODEVIEW {
         let pdb_info = unsafe {
             &*((module as usize + dbg_dir.AddressOfRawData as usize) as *const CV_INFO_PDB70)
         };
-        if pdb_info.cv_signature != 0x53445352 {
-            error!("mismatch sig: {:#x}", pdb_info.cv_signature);
+        // 0x53445352 == "RSDS"
+        if pdb_info.cv_signature != u32::from_le_bytes(*b"RSDS") {
+            error!(
+                "unexpected value for pdb_info cv_signature: got {:#x}",
+                pdb_info.cv_signature
+            );
             None
         } else {
             Some(&pdb_info.signature[..])
