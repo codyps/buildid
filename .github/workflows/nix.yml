@@ -61,4 +61,4 @@ jobs:
       - name: Test
         run: |
           nix develop --command \
-            cargo test
+            env RUSTFLAGS="-Clink-arg=-Wl,--build-id" cargo test
