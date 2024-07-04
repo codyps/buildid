@@ -11,7 +11,7 @@
           inherit system;
         });
         lib = pkgs.lib;
-        stdenv = apple_sdk.stdenv;
+        stdenv = if pkgs.stdenv.isDarwin then apple_sdk.stdenv else pkgs.stdenv;
 
         # Not sure we need the newer sdk, but let's avoid weird issues with
         # having different apple_sdk versions on x86_64 vs aarch64.
