@@ -2,6 +2,10 @@ name: check with nix
 
 on:
   push:
+    branches: 
+      - "master"
+    tags:
+      - "*"
   pull_request:
 
 jobs:
