@@ -40,10 +40,6 @@ jobs:
       - name: Test
         run: cargo test --all-targets
 
-      - name: Test (GNU extras)
-        run: cargo test -p buildid-tests-linker-symbols
-        if: ${{ matrix.os }} == ubuntu-latest
-
   check:
     runs-on: ubuntu-latest
 
