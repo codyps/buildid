@@ -64,6 +64,8 @@
             sccache
             clippy
             rust-analyzer
+            cargo-outdated
+            cargo-udeps
 
             eclint
             codespell
