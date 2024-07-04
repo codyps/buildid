@@ -101,11 +101,11 @@
 extern crate alloc;
 
 cfg_if::cfg_if! {
-    if #[cfg(any(test,
-            all(
+    if #[cfg(all(test,
+            not(all(
                 target_family = "unix",
                 not(target_vendor = "apple"),
-            )
+            ))
         ))] {
         mod align;
     }
@@ -135,6 +135,7 @@ cfg_if::cfg_if! {
     ))] {
         #[path = "elf.rs"]
         mod target;
+        mod align;
     } else if #[cfg(all(
         target_family = "unix",
         target_vendor = "apple",
