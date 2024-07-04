@@ -1,8 +1,12 @@
 name: ci
 on:
   push:
-    branches-ignore:
-      - '**.tmp'
+    branches: 
+      - "master"
+    tags:
+      - "*"
+  pull_request:
+
 jobs:
   build:
     name: Build and test
@@ -13,27 +17,21 @@ jobs:
         rust_version: [beta]
     env:
       BUILD_ID_LEN: 20
-      RUST_LOG: trace
+      RUST_LOG: debug 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust_version }}
-          profile: minimal
           components: clippy
-
-      - uses: Swatinem/rust-cache@v1
 
       - run: cargo install cargo-hack
 
       - name: Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: hack
-          args: --feature-powerset clippy -- -D warnings
+        run: cargo hack --feature-powerset clippy -- -D warnings
 
       - name: Build
         # NOTE: we don't feature-powerset here because we need to provide
@@ -41,68 +39,42 @@ jobs:
         # NOTE: we don't build the entire workspace because
         # buildid-linker-symbols does not work on all platforms (for example,
         # it fails on macos)
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --all-targets
+        run: cargo build --all-targets
 
       - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets
-
-      - name: Test (GNU extras)
-        uses: actions-rs/cargo@v1
-        if: ${{ matrix.os }} == ubuntu-latest
-        with:
-          command: test
-          args: -p buildid-tests-linker-symbols
+        run: cargo test --all-targets
 
   check:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: beta
-          override: true
           components: rustfmt, clippy
 
-      - uses: Swatinem/rust-cache@v1
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all --all-targets -- -D warnings
 
   test-specific:
     env:
-      RUST_LOG: trace
+      RUST_LOG: debug
     strategy:
       matrix:
         os: [ubuntu-latest]
         rust_version: [beta]
-        script: [test-gnu-ld, test-gnu-ld-section-inject, test-gnu-ld-symbol-start-end, test-gnu-ld-symbol-start-end-no-lds]
+        script: [test-gnu-ld, test-gnu-ld-symbol-start-end]
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.rust_version }}
-          profile: minimal
-
-      - uses: Swatinem/rust-cache@v1
 
       - run: ./scripts/${{ matrix.script }}

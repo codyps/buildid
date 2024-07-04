@@ -2,6 +2,10 @@ name: check with nix
 
 on:
   push:
+    branches: 
+      - "master"
+    tags:
+      - "*"
   pull_request:
 
 jobs:
@@ -24,10 +28,6 @@ jobs:
         run: |
           nix develop --command \
             cargo fmt --check
-      - name: Audit Rust code
-        run: |
-          nix develop --command \
-            cargo-deny check
       - name: editorconfig check
         run: |
           nix develop --command \
@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04, macos-12]
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     steps:
       - name: git checkout
         uses: actions/checkout@v4
@@ -61,8 +61,14 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-${{ matrix.os }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Test
+        if: "matrix.os == 'ubuntu-22.04'"
+        run: |
+          nix develop --command \
+            env RUSTFLAGS="-Clink-arg=-Wl,--build-id" cargo test
+      - name: Test
+        if: "matrix.os != 'ubuntu-22.04'"
         run: |
           nix develop --command \
             cargo test

@@ -11,19 +11,17 @@ readme = "README.md"
 categories = ["no-std", "os"]
 include = ["**/*.rs", "README.md"]
 
-
 # TODO: restrict crate content with include/exclude
 # TODO: include readme for crates.io page
 
 [features]
 buildid-symbol-start-end = []
-buildid-section-inject = ["konst"]
+buildid-section-inject = []
 buildid-custom-inject = []
 
 [dependencies]
 buildid-linker-symbols = { version = "1.0", optional = true, path = 'buildid-linker-symbols' }
 log = { version = "0.4", default-features = false }
-konst = { version = "0.2", features = ["parsing_no_proc"], optional = true }
 cfg-if = "1.0.0"
 
 # NOTE: we only need libc if we don't enable one of the overriding features
@@ -34,7 +32,7 @@ libc = { version = "0.2" }
 winapi = { version = "0.3", features = ["libloaderapi", "winnt", "dbghelp"] }
 
 [dev-dependencies]
-env_logger = "0.9"
+env_logger = "0.11"
 hex = "0.4"
 tracing = { version = "0.1", features = ["log"] }
 

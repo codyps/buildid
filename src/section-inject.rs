@@ -2,7 +2,7 @@
 // dynamically look it up instead if we have issues.
 //
 // NOTE: this build id does not include any dynamically linked libraries. We can get those
-// build ids seperately by performing some dynamic lookups.
+// build ids separately by performing some dynamic lookups.
 //
 // NOTE: this works by adding a zero sized symbol to the end of the build-id section, but it's
 // not entirely clear why we're always at the end of the build-id section (instead of at the
@@ -22,7 +22,7 @@
 static NOTE_GNU_BUILD_ID_END: [u8; 0] = [];
 
 // 20 for GNU
-const BUILD_ID_LEN: usize = konst::unwrap_ctx!(konst::primitive::parse_usize(env!("BUILD_ID_LEN")));
+const BUILD_ID_LEN: usize = crate::constparse::parse_usize(env!("BUILD_ID_LEN"));
 
 pub fn build_id() -> Option<&'static [u8]> {
     Some(unsafe {
