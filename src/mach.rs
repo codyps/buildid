@@ -74,7 +74,7 @@ impl Iterator for CommandIter {
         }
 
         let cmd_data_start = unsafe {
-            (core::ptr::addr_of!(lh) as *const u8).add(core::mem::size_of::<LoadCommand>())
+            (lh as *const _ as *const u8).add(core::mem::size_of::<LoadCommand>())
         };
 
         Some(Command {
