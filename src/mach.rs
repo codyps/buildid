@@ -60,10 +60,7 @@ impl Iterator for CommandIter {
             return None;
         }
 
-        let lh = match self.lh {
-            None => return None,
-            Some(lh) => lh,
-        };
+        let lh = self.lh?;
 
         self.ct += 1;
         if self.ct == self.mh.ncmds {
@@ -73,9 +70,8 @@ impl Iterator for CommandIter {
             self.lh = Some(unsafe { &*(loc as *const LoadCommand) });
         }
 
-        let cmd_data_start = unsafe {
-            (core::ptr::addr_of!(lh) as *const u8).add(core::mem::size_of::<LoadCommand>())
-        };
+        let cmd_data_start =
+            unsafe { (lh as *const _ as *const u8).add(core::mem::size_of::<LoadCommand>()) };
 
         Some(Command {
             cmd: lh.cmd,
