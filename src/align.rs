@@ -2,7 +2,7 @@
 pub fn align_up(value: usize, align: usize) -> usize {
     assert_ne!(align, 0, "align is zero");
 
-    (value + align - 1) / align * align
+    value.div_ceil(align) * align
 }
 
 #[cfg(test)]
