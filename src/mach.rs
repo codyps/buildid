@@ -60,10 +60,7 @@ impl Iterator for CommandIter {
             return None;
         }
 
-        let lh = match self.lh {
-            None => return None,
-            Some(lh) => lh,
-        };
+        let lh = self.lh?;
 
         self.ct += 1;
         if self.ct == self.mh.ncmds {
