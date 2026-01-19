@@ -10,18 +10,7 @@
         pkgs = ((import nixpkgs) {
           inherit system;
         });
-        lib = pkgs.lib;
-        stdenv = if pkgs.stdenv.isDarwin then apple_sdk.stdenv else pkgs.stdenv;
-
-        # Not sure we need the newer sdk, but let's avoid weird issues with
-        # having different apple_sdk versions on x86_64 vs aarch64.
-        apple_sdk = pkgs.darwin.apple_sdk_11_0;
-        mkShell = pkgs.mkShell.override {
-          inherit stdenv;
-        };
-        mkShellNoCC = pkgs.mkShellNoCC.override {
-          inherit stdenv;
-        };
+        inherit (pkgs) lib stdenv mkShell mkShellNoCC;
 
        run-lint = pkgs.writeScriptBin "run-lint" ''
           echo "Checking Rust formatting..."
