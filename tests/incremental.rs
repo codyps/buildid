@@ -70,7 +70,8 @@ buildid = {{ path = "{dependency}" }}
             .arg("--quiet")
             .arg("--offline")
             .env("CARGO_INCREMENTAL", "1")
-            .env("CARGO_TARGET_DIR", self.0.join("target"));
+            .env("CARGO_TARGET_DIR", self.0.join("target"))
+            .env_remove("RUSTC_WRAPPER");
         assert_success("cargo build", cargo.output().unwrap());
 
         let executable = self
