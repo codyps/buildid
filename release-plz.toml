@@ -1,0 +1,3 @@
+[workspace]
+# Publish only after a release-plz PR is merged.
+release_always = false
