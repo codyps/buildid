@@ -59,6 +59,7 @@
 //! and use the build-time environment variable `BUILD_ID_SIZE` to determine how many bytes to
 //! read. This method will only function on some platforms (basically: GNU ones). Note that
 //! `BUILD_ID_SIZE` must be set correctly, and differs for GNU ld (bfd) and LLVM lld.
+//! This feature is ignored on Apple targets, which continue to use `LC_UUID`.
 //!
 //! Note that in all cases this works, `buildid-symbol-start-end` is likely to work and be more
 //! reliable.
@@ -117,7 +118,8 @@ cfg_if::cfg_if! {
     if #[cfg(any(test,
             all(
                 not(feature = "buildid-custom-inject"),
-                feature = "buildid-section-inject")
+                feature = "buildid-section-inject",
+                not(target_vendor = "apple"))
             )
         )] {
         mod constparse;
@@ -129,7 +131,10 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "buildid-custom-inject")] {
         #[path = "custom-inject.rs"]
         mod target;
-    } else if  #[cfg(feature = "buildid-section-inject")] {
+    } else if  #[cfg(all(
+        feature = "buildid-section-inject",
+        not(target_vendor = "apple"),
+    ))] {
         #[path = "section-inject.rs"]
         mod target;
     } else if #[cfg(feature = "buildid-symbol-start-end")] {
