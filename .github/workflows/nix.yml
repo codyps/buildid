@@ -23,6 +23,9 @@ jobs:
         with:
           fail-mode: true
 
+      - name: Check flake
+        run: nix flake check -L
+
       # Nix-specific logic begins here
       - name: Check Rust formatting
         run: |
