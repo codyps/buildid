@@ -78,9 +78,10 @@
 //!    `dl_iterate_phdr()`.
 //!  - On Apple unix variants (MacOS), the `LC_UUID` (loader command uuid) is returned directly as
 //!    a slice.
-//!  - On windows, the module is parsed for a CodeView descriptor containing a GUID (which is
-//!    returned directly as a slice). If mingw is used, the same info will appear in the `.buildid`
-//!    section, but this lookup method is not used by this library.
+//!  - On windows, the module is parsed for a CodeView descriptor containing a PDB GUID and age
+//!    (which are returned together as a 20-byte slice). The age is stored in little-endian byte
+//!    order, as it appears in the descriptor. If mingw is used, the same info will appear in the
+//!    `.buildid` section, but this lookup method is not used by this library.
 //!  - On wasm, no data is provided
 //!
 //! # Ensuring build-id is enabled
@@ -94,7 +95,8 @@
 //!    to ensure build id is enabled for clang or gcc
 //!
 //!  - MacOS appears to enable build-id (LC_UUID) by default, with no change needed.
-//!  - Windows MSVC appears to enable build-id (CodeView GUID) by default, with no change needed.
+//!  - Windows MSVC appears to enable build-id (CodeView GUID and age) by default, with no change
+//!    needed.
 #![no_std]
 
 #[cfg(test)]

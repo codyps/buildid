@@ -15,8 +15,9 @@ use winapi::um::winnt::{
 #[repr(C)]
 struct CV_INFO_PDB70 {
     cv_signature: u32,
-    signature: [u8; 16],
-    _age: u32,
+    // The PDB is identified by its GUID and age together. The linker keeps
+    // the GUID and increments the age when it updates a PDB incrementally.
+    build_id: [u8; 20],
     // followed by pdb name
 }
 
@@ -71,6 +72,6 @@ pub fn build_id() -> Option<&'static [u8]> {
         );
         None
     } else {
-        Some(&pdb_info.signature[..])
+        Some(&pdb_info.build_id[..])
     }
 }
