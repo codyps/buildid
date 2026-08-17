@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.0.5](https://github.com/codyps/buildid/compare/buildid-v1.0.4...buildid-v1.0.5) - 2026-08-17
+
+### Other
+
+- Fix macOS feature-powerset build
+- Fix Windows incremental build IDs ([#17](https://github.com/codyps/buildid/pull/17))
+
 ### New Features
 
  - Crate now exists. First release
