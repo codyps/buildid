@@ -14,14 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: git checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Check Nixpkgs inputs
-        uses: DeterminateSystems/flake-checker-action@main
+        uses: DeterminateSystems/flake-checker-action@v13
         with:
           fail-mode: true
+
+      - name: Check flake
+        run: nix flake check -L
 
       # Nix-specific logic begins here
       - name: Check Rust formatting
@@ -48,12 +51,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: git checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - name: Set up Rust cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -63,12 +66,12 @@ jobs:
             target/
           key: cargo-${{ matrix.os }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Test
-        if: "matrix.os == 'ubuntu-22.04'"
+        if: "runner.os == 'Linux'"
         run: |
           nix develop --command \
             env RUSTFLAGS="-Clink-arg=-Wl,--build-id" cargo test
       - name: Test
-        if: "matrix.os != 'ubuntu-22.04'"
+        if: "runner.os != 'Linux'"
         run: |
           nix develop --command \
             cargo test

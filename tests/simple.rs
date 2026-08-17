@@ -18,6 +18,18 @@ fn has_build_id() {
     }
 }
 
+#[cfg(target_family = "windows")]
+#[test]
+fn windows_build_id_contains_pdb_guid_and_age() {
+    let id = buildid::build_id().unwrap();
+    assert_eq!(id.len(), 20);
+
+    let exe = std::fs::read(std::env::current_exe().unwrap()).unwrap();
+    assert!(exe
+        .windows(24)
+        .any(|record| record.starts_with(b"RSDS") && &record[4..] == id));
+}
+
 #[cfg(all(target_family = "unix", target_vendor = "apple",))]
 mod mach {
     fn otool_uuid(exe_path: &std::path::Path) -> Option<Vec<u8>> {

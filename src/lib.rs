@@ -59,6 +59,7 @@
 //! and use the build-time environment variable `BUILD_ID_SIZE` to determine how many bytes to
 //! read. This method will only function on some platforms (basically: GNU ones). Note that
 //! `BUILD_ID_SIZE` must be set correctly, and differs for GNU ld (bfd) and LLVM lld.
+//! This feature is ignored on Apple targets, which continue to use `LC_UUID`.
 //!
 //! Note that in all cases this works, `buildid-symbol-start-end` is likely to work and be more
 //! reliable.
@@ -78,9 +79,10 @@
 //!    `dl_iterate_phdr()`.
 //!  - On Apple unix variants (MacOS), the `LC_UUID` (loader command uuid) is returned directly as
 //!    a slice.
-//!  - On windows, the module is parsed for a CodeView descriptor containing a GUID (which is
-//!    returned directly as a slice). If mingw is used, the same info will appear in the `.buildid`
-//!    section, but this lookup method is not used by this library.
+//!  - On windows, the module is parsed for a CodeView descriptor containing a PDB GUID and age
+//!    (which are returned together as a 20-byte slice). The age is stored in little-endian byte
+//!    order, as it appears in the descriptor. If mingw is used, the same info will appear in the
+//!    `.buildid` section, but this lookup method is not used by this library.
 //!  - On wasm, no data is provided
 //!
 //! # Ensuring build-id is enabled
@@ -94,7 +96,8 @@
 //!    to ensure build id is enabled for clang or gcc
 //!
 //!  - MacOS appears to enable build-id (LC_UUID) by default, with no change needed.
-//!  - Windows MSVC appears to enable build-id (CodeView GUID) by default, with no change needed.
+//!  - Windows MSVC appears to enable build-id (CodeView GUID and age) by default, with no change
+//!    needed.
 #![no_std]
 
 #[cfg(test)]
@@ -115,7 +118,8 @@ cfg_if::cfg_if! {
     if #[cfg(any(test,
             all(
                 not(feature = "buildid-custom-inject"),
-                feature = "buildid-section-inject")
+                feature = "buildid-section-inject",
+                not(target_vendor = "apple"))
             )
         )] {
         mod constparse;
@@ -127,7 +131,10 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "buildid-custom-inject")] {
         #[path = "custom-inject.rs"]
         mod target;
-    } else if  #[cfg(feature = "buildid-section-inject")] {
+    } else if  #[cfg(all(
+        feature = "buildid-section-inject",
+        not(target_vendor = "apple"),
+    ))] {
         #[path = "section-inject.rs"]
         mod target;
     } else if #[cfg(feature = "buildid-symbol-start-end")] {
