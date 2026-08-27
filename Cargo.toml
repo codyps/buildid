@@ -38,5 +38,6 @@ tracing = { version = "0.1", features = ["log"] }
 
 [workspace]
 members = [
-	'buildid-tests-linker-symbols'
+	'buildid-tests-linker-symbols',
+	'buildid-wasm-stamp',
 ]

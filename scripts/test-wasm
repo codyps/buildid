@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+test_target_dir="$(mktemp -d "${TMPDIR:-/tmp}/buildid-wasm-test.XXXXXX")"
+trap 'rm -rf -- "$test_target_dir"' EXIT
+export CARGO_TARGET_DIR="$test_target_dir"
+
+wasm_path="$test_target_dir/wasm32-unknown-unknown/debug/examples/simple.wasm"
+
+cargo build --target wasm32-unknown-unknown --example simple
+node scripts/test-wasm.mjs --unstamped "$wasm_path"
+cargo run -p buildid-wasm-stamp -- --id-source content "$wasm_path"
+cargo run -p buildid-wasm-stamp -- --check "$wasm_path"
+node scripts/test-wasm.mjs "$wasm_path"
+
+existing_id="$(cargo run -q -p buildid-wasm-stamp -- "$wasm_path")"
+cargo run -p buildid-wasm-stamp -- --check "$wasm_path"
+node scripts/test-wasm.mjs --expect-id "$existing_id" "$wasm_path"

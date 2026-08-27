@@ -83,7 +83,8 @@
 //!    (which are returned together as a 20-byte slice). The age is stored in little-endian byte
 //!    order, as it appears in the descriptor. If mingw is used, the same info will appear in the
 //!    `.buildid` section, but this lookup method is not used by this library.
-//!  - On wasm, no data is provided
+//!  - On wasm, a guest-visible slot is returned after the final module has been processed with
+//!    `buildid-wasm-stamp`. An unstamped module returns `None`.
 //!
 //! # Ensuring build-id is enabled
 //!
@@ -99,6 +100,10 @@
 //!  - Windows MSVC appears to enable build-id (CodeView GUID and age) by default, with no change
 //!    needed.
 #![no_std]
+
+#[doc(hidden)]
+#[path = "wasm-stamp.rs"]
+pub mod wasm_stamp;
 
 #[cfg(test)]
 extern crate alloc;
@@ -157,12 +162,8 @@ cfg_if::cfg_if! {
         #[path = "windows.rs"]
         mod target;
     } else if #[cfg(target_family = "wasm")] {
-        mod target {
-            pub fn build_id() -> Option<&'static [u8]> {
-                // not sure how to implement this right now. need to introspect the wasm object in some way
-                None
-            }
-        }
+        #[path = "wasm.rs"]
+        mod target;
     }
 }
 

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+image="${BUILDID_DOCKER_IMAGE:-rust:bookworm}"
+
+exec docker run --rm \
+	--mount "type=bind,src=$repo_dir,dst=/workspace,readonly" \
+	--tmpfs /workspace/target:exec \
+	--workdir /workspace \
+	--env CARGO_TARGET_DIR=/tmp/buildid-target \
+	--env CARGO_TERM_COLOR=always \
+	"$image" \
+	bash -euo pipefail -c '
+		apt-get update
+		apt-get install --yes --no-install-recommends bsdextrautils nodejs
+		rustup toolchain install beta --profile minimal
+		rustup default beta
+		rustup target add wasm32-unknown-unknown
+
+		cargo test --all-targets --locked
+		cargo test -p buildid-wasm-stamp --all-targets --locked
+		./scripts/test-gnu-ld --locked
+		./scripts/test-gnu-ld-symbol-start-end --locked
+		./scripts/test-wasm
+	'
