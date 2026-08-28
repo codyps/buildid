@@ -58,6 +58,20 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all --all-targets -- -D warnings
 
+  wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: beta
+          target: wasm32-unknown-unknown
+
+      - name: Test stamped WebAssembly build ID
+        run: ./scripts/test-wasm
+
   test-specific:
     env:
       RUST_LOG: debug

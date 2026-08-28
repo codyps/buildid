@@ -54,6 +54,7 @@
             clippy
             rust-analyzer
             cargo-outdated
+            cargo-msrv
             cargo-udeps
 
             cargo-deny

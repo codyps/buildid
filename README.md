@@ -29,6 +29,49 @@ other platforms can be supported by enabling one of the optional features (see
 the [docs](https://docs.rs/buildid) for details). If you have another platform
 that needs support, send a PR!
 
+## WebAssembly and WASI
+
+WebAssembly modules cannot inspect their own custom sections at runtime. To
+make the build ID available both to the guest and to host tooling, run the
+companion stamper on the final `.wasm` file:
+
+```console
+RUSTFLAGS="-C link-arg=--build-id" \
+  cargo build --target wasm32-unknown-unknown --release
+cargo run -p buildid-wasm-stamp -- \
+  target/wasm32-unknown-unknown/release/application.wasm
+```
+
+When using the published crates, install and run the companion directly:
+
+```console
+cargo install buildid-wasm-stamp
+buildid-wasm-stamp application.wasm
+buildid-wasm-stamp --check application.wasm
+```
+
+By default, `--id-source top-level` copies the input binary's top-level
+`build_id` into every guest-visible slot. For a core module this is
+its own ID; for a component it is the outer component's ID. To generate a
+canonical SHA-256 ID instead, select content mode explicitly:
+
+```console
+buildid-wasm-stamp --id-source content application.wasm
+```
+
+In either mode, the guest slot and conventional WebAssembly `build_id` custom
+section contain the same bytes. `buildid::build_id()` returns that exact stamp.
+It returns `None` when the linked module has not been stamped.
+
+Stamping is deterministic and idempotent. Run it after `wasm-opt`,
+`wasm-bindgen`, componentization, debug stripping, and any other tool that can
+rewrite the WebAssembly binary. By default the input is replaced; use
+`--output PATH` to preserve it.
+
+In both modes every stamp slot receives the same outermost-binary ID. This
+supports multiple copies of the `buildid` library and multiple embedded core
+modules.
+
 By default, the `buildid` crate will pick the best build-id lookup function it
 can for your platform. If one is not available, it may fail to compile. If you
 have a custom build-id lookup mechanism you want to tell `buildid` about,
