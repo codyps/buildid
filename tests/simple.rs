@@ -47,7 +47,7 @@ mod mach {
                 let uuid_line = std::str::from_utf8(lines.next().expect("expected uuid line"))
                     .expect("invalid utf8");
 
-                let parts: Vec<&str> = uuid_line.trim().split_whitespace().collect();
+                let parts: Vec<&str> = uuid_line.split_whitespace().collect();
                 assert!(parts.len() == 2 && parts[0] == "uuid");
                 let uuid_str = parts[1].replace("-", "");
                 return Some(hex::decode(uuid_str).unwrap());
