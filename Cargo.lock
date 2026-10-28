@@ -107,6 +107,7 @@ dependencies = [
 name = "buildid-wasm-stamp"
 version = "0.1.0"
 dependencies = [
+ "buildid",
  "sha2",
  "tempfile",
  "wasmparser",

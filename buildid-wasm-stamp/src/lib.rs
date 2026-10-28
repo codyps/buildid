@@ -3,21 +3,15 @@
 use std::fmt;
 use std::ops::Range;
 
+use buildid::wasm_stamp::{
+    CUSTOM_SECTION_NAME, ID_LEN, MODE_HASH, MODE_MODULE, MODE_TOP_LEVEL, MODE_UNSTAMPED,
+    SLOT_PREFIX, SLOT_SUFFIX, UNSTAMPED_ID, UNSTAMPED_LEN,
+};
 use sha2::{Digest, Sha256};
 use wasmparser::{Encoding, Parser, Payload};
 
 const WASM_MAGIC: &[u8; 4] = b"\0asm";
 const WASM_HEADER_LEN: usize = 8;
-const CUSTOM_SECTION_NAME: &[u8] = b"build_id";
-const ID_LEN: usize = 32;
-const SLOT_PREFIX: &[u8; 16] = b"buildid-wasm-v1:";
-const SLOT_SUFFIX: &[u8; 16] = b":buildid-wasm-v1";
-const UNSTAMPED_ID: &[u8; ID_LEN] = b"unstamped-buildid-wasm-v1-000000";
-const MODE_UNSTAMPED: u8 = 0xff;
-const UNSTAMPED_LEN: u8 = 0xff;
-const MODE_HASH: u8 = 1;
-const MODE_TOP_LEVEL: u8 = 2;
-const MODE_MODULE: u8 = 3;
 
 /// The result of stamping a WebAssembly binary.
 #[derive(Clone, Debug, Eq, PartialEq)]

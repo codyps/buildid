@@ -65,14 +65,32 @@ buildid = {{ path = "{dependency}" }}
         let mut cargo = Command::new(cargo());
         cargo
             .current_dir(&self.0)
-            .arg("build")
+            .arg("rustc")
             .args(["--example", "incremental_probe"])
             .arg("--quiet")
             .arg("--offline")
             .env("CARGO_INCREMENTAL", "1")
             .env("CARGO_TARGET_DIR", self.0.join("target"))
             .env_remove("RUSTC_WRAPPER");
-        assert_success("cargo build", cargo.output().unwrap());
+
+        // CI disables dev debug information, and rustc normally requests
+        // /OPT:REF. Both can prevent the incremental MSVC link this test needs.
+        // Apply linker options only to the probe, preserving inherited Rust flags.
+        #[cfg(all(target_os = "windows", target_env = "msvc"))]
+        cargo.env("CARGO_PROFILE_DEV_DEBUG", "2").args([
+            "--",
+            "-C",
+            "linker=link.exe",
+            "-C",
+            "link-arg=/DEBUG:FULL",
+            "-C",
+            "link-arg=/INCREMENTAL",
+            "-C",
+            "link-arg=/OPT:NOREF",
+            "-C",
+            "link-arg=/OPT:NOICF",
+        ]);
+        assert_success("cargo rustc", cargo.output().unwrap());
 
         let executable = self
             .0
@@ -135,7 +153,9 @@ fn build_id_changes_after_incremental_rebuild() {
     project.write_source("first");
     let first = project.build_id();
 
-    project.write_source("second");
+    // Keep the replacement string the same size so section growth does not
+    // force a full link instead of updating the existing PDB's age.
+    project.write_source("other");
     let second = project.build_id();
 
     assert_incremental_link_was_used(&first, &second);
