@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0](https://github.com/codyps/buildid/compare/buildid-wasm-stamp-v0.0.0...buildid-wasm-stamp-v0.1.0) - 2026-10-28
+
+### Added
+
+- *(wasm)* add guest-readable build ID stamping
+
+### Fixed
+
+- *(ci)* refresh Nix inputs and request incremental MSVC links
+- *(wasm)* preserve module IDs and stream stamping
+
 ### Added
 
 - Add the `buildid-wasm-stamp` companion tool for WebAssembly modules and

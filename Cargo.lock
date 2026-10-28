@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "buildid"
-version = "1.0.5"
+version = "1.1.0"
 dependencies = [
  "buildid-linker-symbols",
  "cfg-if",
