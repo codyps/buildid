@@ -1,8 +1,8 @@
 use core::cell::UnsafeCell;
 
 use crate::wasm_stamp::{
-    ID_LEN, MODE_HASH, MODE_TOP_LEVEL, MODE_UNSTAMPED, SLOT_PREFIX, SLOT_SUFFIX, UNSTAMPED_ID,
-    UNSTAMPED_LEN,
+    ID_LEN, MODE_HASH, MODE_MODULE, MODE_TOP_LEVEL, MODE_UNSTAMPED, SLOT_PREFIX, SLOT_SUFFIX,
+    UNSTAMPED_ID, UNSTAMPED_LEN,
 };
 
 #[repr(C)]
@@ -37,7 +37,7 @@ pub fn build_id() -> Option<&'static [u8]> {
     let len = usize::from(slot.len);
     if slot.prefix != *SLOT_PREFIX
         || slot.suffix != *SLOT_SUFFIX
-        || !matches!(slot.mode, MODE_HASH | MODE_TOP_LEVEL)
+        || !matches!(slot.mode, MODE_HASH | MODE_TOP_LEVEL | MODE_MODULE)
         || len == 0
         || len > ID_LEN
     {

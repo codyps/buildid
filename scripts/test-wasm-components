@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Build and execute real components; requires wasm-tools and Wasmtime on PATH.
+
+WASM_TOOLS and WASMTIME may override the executable paths. Set WASI_ADAPTER to
+the official wasi_snapshot_preview1.command.wasm adapter. All build artifacts
+and generated probe sources live in a temporary directory removed on exit.
+"""
+
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+REPO = Path(__file__).resolve().parents[1]
+WASM_TOOLS = os.environ.get("WASM_TOOLS", "wasm-tools")
+WASMTIME = os.environ.get("WASMTIME", "wasmtime")
+CARGO = os.environ.get("CARGO", "cargo")
+
+
+def run(*args, env=None, success=True):
+    args = [str(arg) for arg in args]
+    result = subprocess.run(args, cwd=REPO, env=env, text=True, capture_output=True)
+    if (result.returncode == 0) != success:
+        raise AssertionError(f"{args}\n{result.stdout}\n{result.stderr}")
+    return result.stdout.strip() if success else result.stderr.strip()
+
+
+def leb(value):
+    result = bytearray()
+    while value >= 128:
+        result.append((value & 127) | 128)
+        value >>= 7
+    result.append(value)
+    return bytes(result)
+
+
+def read_leb(data, pos):
+    value = shift = 0
+    while True:
+        byte = data[pos]
+        pos += 1
+        value |= (byte & 127) << shift
+        if byte < 128:
+            return value, pos
+        shift += 7
+        assert shift <= 35
+
+
+def custom(name, payload):
+    name = name.encode()
+    body = leb(len(name)) + name + payload
+    return b"\0" + leb(len(body)) + body
+
+
+def build_ids(data):
+    """Independent scope-aware reader; returns (outer IDs, nested module IDs)."""
+    component = data[4:8] == b"\x0d\0\x01\0"
+    outer, modules, pos = [], [], 8
+    while pos < len(data):
+        section = data[pos]
+        size, start = read_leb(data, pos + 1)
+        end = start + size
+        assert end <= len(data)
+        if section == 0:
+            length, name_start = read_leb(data, start)
+            name_end = name_start + length
+            if data[name_start:name_end] == b"build_id":
+                length, id_start = read_leb(data, name_end)
+                assert id_start + length == end
+                outer.append(data[id_start:end])
+        elif component and section in (1, 4):
+            child_outer, child_modules = build_ids(data[start:end])
+            modules.extend([child_outer] if section == 1 else child_modules)
+        pos = end
+    return outer, modules
+
+
+def guest_id(path):
+    output = run(WASMTIME, "run", "-C", "cache=n", path)
+    if output == "build-id: None":
+        return None
+    match = re.fullmatch(r"build-id: Some\(\[(.*)\]\)", output)
+    assert match, output
+    return bytes(int(byte, 16) for byte in match[1].split(", "))
+
+
+def stamp(stamper, source, target, mode=None):
+    options = ["--id-source", mode] if mode else []
+    output = run(stamper, *options, "--output", target, source)
+    return [bytes.fromhex(line) for line in output.splitlines()]
+
+
+def verify(stamper, path, expected):
+    run(WASM_TOOLS, "validate", path)
+    assert run(stamper, "--check", path).splitlines() == [item.hex() for item in expected]
+
+
+def command_component(stamper, directory, name, source):
+    assert guest_id(source) is None
+    outer_before, nested_before = build_ids(source.read_bytes())
+    assert not outer_before and len(nested_before[0]) == 1
+    original_id = nested_before[0][0]
+    for mode in ("module", "content", "top-level"):
+        input_path = directory / f"{name}-{mode}-input.wasm"
+        outer_id = b"outer-component!"
+        input_bytes = source.read_bytes()
+        if mode == "top-level":
+            input_bytes += custom("build_id", leb(len(outer_id)) + outer_id)
+        input_path.write_bytes(input_bytes)
+        target = directory / f"{name}-{mode}.wasm"
+        ids = stamp(stamper, input_path, target, None if mode == "module" else mode)
+        expected = original_id if mode == "module" else outer_id if mode == "top-level" else ids[0]
+        assert ids == [expected]
+        verify(stamper, target, ids)
+        assert guest_id(target) == expected
+        outer_after, nested_after = build_ids(target.read_bytes())
+        assert nested_after == nested_before
+        if mode == "module":
+            assert outer_after == outer_before
+        else:
+            assert outer_after == ids
+        original = target.read_bytes()
+        assert stamp(stamper, target, target, mode) == ids
+        assert target.read_bytes() == original
+        assert run(stamper, "--check", "--quiet", target) == ""
+        if mode == "content":
+            target.write_bytes(original + custom("probe-metadata", b"changed"))
+            assert "stale" in run(stamper, "--check", target, success=False)
+            refreshed = stamp(stamper, target, target, "content")
+            assert refreshed != ids
+            verify(stamper, target, refreshed)
+            assert guest_id(target) == refreshed[0]
+    # Module scope must also win when an unrelated outer component ID exists.
+    ids = stamp(stamper, input_path, target)
+    assert ids == [original_id]
+    assert build_ids(target.read_bytes())[0] == [outer_id]
+    assert guest_id(target) == original_id
+    print(f"PASS {name}: default module IDs, both outer modes, idempotence, stale detection", flush=True)
+
+
+def multiple_modules(stamper, directory, env):
+    probe = directory / "probe"
+    (probe / "src").mkdir(parents=True)
+    (probe / "Cargo.toml").write_text(
+        '[package]\nname = "component-probe"\nversion = "0.0.0"\nedition = "2021"\n'
+        '[lib]\ncrate-type = ["cdylib"]\n[dependencies]\n'
+        f'buildid = {{ path = {json.dumps(str(REPO))} }}\n[workspace]\n'
+    )
+    shutil.copyfile(REPO / "Cargo.lock", probe / "Cargo.lock")
+    (probe / "src/lib.rs").write_text('''
+#[no_mangle]
+pub extern "C" fn build_id_len() -> u32 {
+    buildid::build_id().map_or(0, |id| id.len() as u32)
+}
+#[no_mangle]
+pub extern "C" fn build_id_word(index: u32) -> u64 {
+    let mut word = [0u8; 8];
+    if let Some(id) = buildid::build_id() {
+        for (offset, byte) in word.iter_mut().enumerate() {
+            *byte = id.get(index as usize * 8 + offset).copied().unwrap_or(0);
+        }
+    }
+    u64::from_le_bytes(word)
+}
+#[no_mangle]
+pub extern "C" fn variant() -> u32 { env!("BUILDID_PROBE_VARIANT").as_bytes()[0] as u32 }
+''')
+    wat = ["(component"]
+    module_ids = []
+    for label in ("a", "b"):
+        run(CARGO, "build", "--manifest-path", probe / "Cargo.toml", "--release", "--offline",
+            "--target", "wasm32-unknown-unknown", env={**env, "BUILDID_PROBE_VARIANT": label})
+        module = Path(env["CARGO_TARGET_DIR"]) / "wasm32-unknown-unknown/release/component_probe.wasm"
+        module_ids.append(build_ids(module.read_bytes())[0][0])
+        module_wat = run(WASM_TOOLS, "print", module)
+        if label == "b":
+            wat.append("(component $nested")
+        wat.extend([
+            re.sub(r"^\(module(?: \$[^\s()]+)?", f"(core module ${label}", module_wat, count=1),
+            f"(core instance ${label}i (instantiate ${label}))",
+            f'(func (export "{label}-len") (result u32) '
+            f'(canon lift (core func ${label}i "build_id_len")))',
+            f'(func (export "{label}-word") (param "index" u32) (result u64) '
+            f'(canon lift (core func ${label}i "build_id_word")))',
+        ])
+        if label == "b":
+            wat.extend([
+                ")", "(instance $nested-instance (instantiate $nested))",
+                '(alias export $nested-instance "b-len" (func $b-len))',
+                '(alias export $nested-instance "b-word" (func $b-word))',
+                '(export "b-len" (func $b-len))', '(export "b-word" (func $b-word))',
+            ])
+    wat.extend(["(core module $adapter)", ")"])
+    assert module_ids[0] != module_ids[1]
+    source = directory / "two-modules.wat"
+    source.write_text("\n".join(wat))
+    component = directory / "two-modules.wasm"
+    run(WASM_TOOLS, "parse", source, "-o", component)
+    run(WASM_TOOLS, "validate", component)
+
+    def invoke(path, expression):
+        return int(run(WASMTIME, "run", "-C", "cache=n", "--invoke", expression, path))
+
+    for label in ("a", "b"):
+        assert invoke(component, f"{label}-len()") == 0
+    for mode in ("module", "content", "top-level"):
+        source = directory / f"two-{mode}-input.wasm"
+        outer_id = b"outer-component!"
+        data = component.read_bytes()
+        if mode == "top-level":
+            data += custom("build_id", leb(len(outer_id)) + outer_id)
+        source.write_bytes(data)
+        target = directory / f"two-{mode}.wasm"
+        ids = stamp(stamper, source, target, None if mode == "module" else mode)
+        if mode == "module":
+            assert ids == module_ids
+        elif mode == "top-level":
+            assert ids == [outer_id, outer_id]
+        else:
+            assert len(ids[0]) == 32 and ids == [ids[0], ids[0]]
+        verify(stamper, target, ids)
+        for label, expected in zip(("a", "b"), ids):
+            assert invoke(target, f"{label}-len()") == len(expected)
+            actual = b"".join(invoke(target, f"{label}-word({index})").to_bytes(8, "little")
+                              for index in range((len(expected) + 7) // 8))
+            assert actual[:len(expected)] == expected
+        original = target.read_bytes()
+        assert stamp(stamper, target, target, mode) == ids
+        assert target.read_bytes() == original
+        print(f"PASS nested modules/{mode}: two live modules return all expected bytes", flush=True)
+
+
+def main():
+    adapter = Path(os.environ.get("WASI_ADAPTER", "wasi_snapshot_preview1.command.wasm")).resolve()
+    if not adapter.is_file():
+        raise SystemExit("Set WASI_ADAPTER to wasi_snapshot_preview1.command.wasm")
+    run(WASM_TOOLS, "--version")
+    run(WASMTIME, "--version")
+    with tempfile.TemporaryDirectory(prefix="buildid-components-") as temporary:
+        directory = Path(temporary)
+        env = {**os.environ, "CARGO_TARGET_DIR": str(directory / "target")}
+        run(CARGO, "build", "-p", "buildid-wasm-stamp", "--locked", env=env)
+        stamper = directory / "target/debug/buildid-wasm-stamp"
+        linked_env = {**env, "RUSTFLAGS": "-C link-arg=--build-id"}
+        for target in ("wasm32-wasip1", "wasm32-wasip2"):
+            run(CARGO, "build", "--example", "simple", "--release", "--locked", "--target", target,
+                env=linked_env)
+        preview1 = directory / "target/wasm32-wasip1/release/examples/simple.wasm"
+        native = directory / "target/wasm32-wasip2/release/examples/simple.wasm"
+        adapted = directory / "adapted.wasm"
+        run(WASM_TOOLS, "component", "new", preview1, "--adapt",
+            f"wasi_snapshot_preview1={adapter}", "-o", adapted)
+        command_component(stamper, directory, "native-p2-release", native)
+        command_component(stamper, directory, "adapted-p1-release", adapted)
+        lto_env = {**linked_env, "CARGO_TARGET_DIR": str(directory / "lto"),
+                   "CARGO_PROFILE_RELEASE_LTO": "fat", "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": "1"}
+        run(CARGO, "build", "--example", "simple", "--release", "--locked", "--target", "wasm32-wasip2",
+            env=lto_env)
+        command_component(stamper, directory, "native-p2-fat-lto",
+                          directory / "lto/wasm32-wasip2/release/examples/simple.wasm")
+        stripped = directory / "stripped.wasm"
+        run(WASM_TOOLS, "strip", "--all", native, "-o", stripped)
+        before = stripped.read_bytes()
+        assert "--id-source content" in run(stamper, stripped, success=False)
+        assert stripped.read_bytes() == before
+        ids = stamp(stamper, stripped, stripped, "content")
+        verify(stamper, stripped, ids)
+        assert guest_id(stripped) == ids[0]
+        print("PASS stripped component: missing module ID errors without writing; content mode executes", flush=True)
+        multiple_modules(stamper, directory, linked_env)
+
+
+if __name__ == "__main__":
+    main()

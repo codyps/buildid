@@ -11,7 +11,7 @@ Stamp a final WebAssembly module or component with a guest-readable build ID.
 Usage: buildid-wasm-stamp [--check | --id-source SOURCE] [-q] [-o OUTPUT] INPUT
 
 Options:
-    --id-source SOURCE         Use top-level or content [default: top-level]
+    --id-source SOURCE         Use module, top-level, or content [default: module]
     --check                    Validate the existing stamp without writing
     -o, --output OUTPUT        Write to OUTPUT instead of replacing INPUT
     -q, --quiet                Do not print the build ID
@@ -29,6 +29,7 @@ struct Options {
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum StampMode {
+    Module,
     TopLevel,
     Generate,
 }
@@ -51,14 +52,15 @@ fn run() -> Result<(), String> {
         .map_err(|error| format!("failed to read {}: {error}", options.input.display()))?;
 
     if options.check {
-        let id = buildid_wasm_stamp::check(&input).map_err(|error| error.to_string())?;
+        let ids = buildid_wasm_stamp::check(&input).map_err(|error| error.to_string())?;
         if !options.quiet {
-            println!("{}", hex(&id));
+            print_ids(&ids);
         }
         return Ok(());
     }
 
     let stamped = match options.mode {
+        StampMode::Module => buildid_wasm_stamp::stamp_modules(&input),
         StampMode::TopLevel => buildid_wasm_stamp::stamp_top_level(&input),
         StampMode::Generate => buildid_wasm_stamp::stamp(&input),
     }
@@ -69,7 +71,7 @@ fn run() -> Result<(), String> {
             .map_err(|error| format!("failed to write {}: {error}", output.display()))?;
     }
     if !options.quiet {
-        println!("{}", hex(&stamped.id));
+        print_ids(&stamped.ids);
     }
     Ok(())
 }
@@ -94,9 +96,9 @@ fn parse_options() -> Result<Option<Options>, String> {
             }
             Some("--check") => check = true,
             Some("--id-source") => {
-                let source = args
-                    .next()
-                    .ok_or_else(|| "--id-source requires top-level or content".to_owned())?;
+                let source = args.next().ok_or_else(|| {
+                    "--id-source requires module, top-level, or content".to_owned()
+                })?;
                 let source = source
                     .to_str()
                     .ok_or_else(|| "ID source must be valid UTF-8".to_owned())?;
@@ -136,7 +138,7 @@ fn parse_options() -> Result<Option<Options>, String> {
         input,
         output,
         check,
-        mode: mode.unwrap_or(StampMode::TopLevel),
+        mode: mode.unwrap_or(StampMode::Module),
         quiet,
     }))
 }
@@ -168,17 +170,18 @@ fn atomic_write(path: &Path, contents: &[u8]) -> io::Result<()> {
 
 fn parse_id_source(source: &str) -> Result<StampMode, String> {
     match source {
+        "module" => Ok(StampMode::Module),
         "top-level" => Ok(StampMode::TopLevel),
         "content" => Ok(StampMode::Generate),
         value => Err(format!(
-            "invalid ID source {value:?}; expected top-level or content"
+            "invalid ID source {value:?}; expected module, top-level, or content"
         )),
     }
 }
 
 fn set_mode(mode: &mut Option<StampMode>, requested: StampMode) -> Result<(), String> {
     if mode.is_some_and(|current| current != requested) {
-        return Err("conflicting ID sources; select either top-level or content".to_owned());
+        return Err("conflicting ID sources; select module, top-level, or content".to_owned());
     }
     *mode = Some(requested);
     Ok(())
@@ -192,4 +195,10 @@ fn hex(bytes: &[u8]) -> String {
         output.push(char::from(DIGITS[usize::from(byte & 0x0f)]));
     }
     output
+}
+
+fn print_ids(ids: &[Vec<u8>]) {
+    for id in ids {
+        println!("{}", hex(id));
+    }
 }

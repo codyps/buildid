@@ -67,10 +67,34 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: beta
-          target: wasm32-unknown-unknown
+          target: wasm32-unknown-unknown,wasm32-wasip1,wasm32-wasip2
+
+      - name: Install component test tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          component_tools="$RUNNER_TEMP/buildid-component-tools"
+          mkdir -p "$component_tools"
+          cd "$component_tools"
+          curl -fLsS --retry 3 -O https://github.com/bytecodealliance/wasmtime/releases/download/v50.0.0/wasmtime-v50.0.0-x86_64-linux.tar.xz
+          curl -fLsS --retry 3 -O https://github.com/bytecodealliance/wasm-tools/releases/download/v1.262.0/wasm-tools-1.262.0-x86_64-linux.tar.gz
+          curl -fLsS --retry 3 -O https://github.com/bytecodealliance/wasmtime/releases/download/v50.0.0/wasi_snapshot_preview1.command.wasm
+          echo '77c19ee0437991f9ac7837b9c269d9c7076744f85dad263fea5214cc2723c7ff  wasmtime-v50.0.0-x86_64-linux.tar.xz' | sha256sum --check
+          echo '655b8df67d54c3ef9b52fc237c4e94bbfbb5f5f43825245cb0940a7002a9ed65  wasm-tools-1.262.0-x86_64-linux.tar.gz' | sha256sum --check
+          echo 'b3de00ac47528237211c6404b4a7e4235a67878665dc3e8853071908c3127a85  wasi_snapshot_preview1.command.wasm' | sha256sum --check
+          tar -xf wasmtime-v50.0.0-x86_64-linux.tar.xz --strip-components=1
+          tar -xf wasm-tools-1.262.0-x86_64-linux.tar.gz --strip-components=1
+          echo "$component_tools" >> "$GITHUB_PATH"
+          echo "WASI_ADAPTER=$component_tools/wasi_snapshot_preview1.command.wasm" >> "$GITHUB_ENV"
+
+      - name: Test stamper parser and ID scopes
+        run: cargo test -p buildid-wasm-stamp --all-targets --locked
 
       - name: Test stamped WebAssembly build ID
         run: ./scripts/test-wasm
+
+      - name: Execute stamped components
+        run: ./scripts/test-wasm-components
 
   test-specific:
     env:

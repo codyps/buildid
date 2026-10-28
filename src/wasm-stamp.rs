@@ -26,6 +26,9 @@ pub const MODE_HASH: u8 = 1;
 /// Slot mode used when copying the top-level module or component build ID.
 pub const MODE_TOP_LEVEL: u8 = 2;
 
+/// Slot mode used when copying the containing core module's build ID.
+pub const MODE_MODULE: u8 = 3;
+
 /// Prefix used to unambiguously locate the guest-visible stamp slot.
 pub const SLOT_PREFIX: &[u8; 16] = b"buildid-wasm-v1:";
 

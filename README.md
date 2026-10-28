@@ -50,17 +50,22 @@ buildid-wasm-stamp application.wasm
 buildid-wasm-stamp --check application.wasm
 ```
 
-By default, `--id-source top-level` copies the input binary's top-level
-`build_id` into every guest-visible slot. For a core module this is
-its own ID; for a component it is the outer component's ID. To generate a
-canonical SHA-256 ID instead, select content mode explicitly:
+By default, `--id-source module` copies each containing core module's existing
+`build_id` into that module's guest-visible slots. This also works inside
+components, including native `wasm32-wasip2` output: each embedded core module
+keeps its own identity, and an outer component ID is not required. Modules
+without slots are left alone. Existing custom sections are preserved.
+
+To give every slot the same outer module or component ID, choose
+`--id-source top-level` explicitly. To generate a canonical SHA-256 ID for the
+entire final binary instead, select content mode:
 
 ```console
 buildid-wasm-stamp --id-source content application.wasm
 ```
 
-In either mode, the guest slot and conventional WebAssembly `build_id` custom
-section contain the same bytes. `buildid::build_id()` returns that exact stamp.
+The guest slot matches the conventional WebAssembly `build_id` custom section
+in the selected scope. `buildid::build_id()` returns that exact stamp.
 It returns `None` when the linked module has not been stamped.
 
 Stamping is deterministic and idempotent. Run it after `wasm-opt`,
@@ -68,9 +73,16 @@ Stamping is deterministic and idempotent. Run it after `wasm-opt`,
 rewrite the WebAssembly binary. By default the input is replaced; use
 `--output PATH` to preserve it.
 
-In both modes every stamp slot receives the same outermost-binary ID. This
-supports multiple copies of the `buildid` library and multiple embedded core
-modules.
+The existing ID must contain between 1 and 32 bytes. If a module containing
+slots has no ID, module mode fails with an error; choose content mode to
+generate an outer ID. Both whole-binary modes retain any nested module IDs,
+but guest lookups then return the outer ID rather than the containing
+module's ID. For symbol lookup using existing module debug files, prefer the
+default module mode.
+
+Multiple copies of the library in one core module receive the same ID.
+Standard output contains one hexadecimal ID per core module containing slots,
+in file order; IDs may repeat. Use `--quiet` to suppress this output.
 
 By default, the `buildid` crate will pick the best build-id lookup function it
 can for your platform. If one is not available, it may fail to compile. If you
