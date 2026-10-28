@@ -79,6 +79,14 @@ buildid = {{ path = "{dependency}" }}
         #[cfg(all(target_os = "windows", target_env = "msvc"))]
         cargo.env("CARGO_PROFILE_DEV_DEBUG", "2").args([
             "--",
+            "--print",
+            "link-args",
+            "-A",
+            "warnings",
+            "-W",
+            "linker-info",
+            "-C",
+            "save-temps",
             "-C",
             "linker=link.exe",
             "-C",
@@ -90,7 +98,14 @@ buildid = {{ path = "{dependency}" }}
             "-C",
             "link-arg=/OPT:NOICF",
         ]);
-        assert_success("cargo rustc", cargo.output().unwrap());
+        let built = cargo.output().unwrap();
+        #[cfg(all(target_os = "windows", target_env = "msvc"))]
+        eprintln!(
+            "probe linker stdout:\n{}\nprobe linker stderr:\n{}",
+            String::from_utf8_lossy(&built.stdout),
+            String::from_utf8_lossy(&built.stderr)
+        );
+        assert_success("cargo rustc", built);
 
         let executable = self
             .0
