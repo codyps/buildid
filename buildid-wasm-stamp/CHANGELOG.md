@@ -11,15 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- *(wasm)* add guest-readable build ID stamping
-
-### Fixed
-
-- *(ci)* refresh Nix inputs and request incremental MSVC links
-- *(wasm)* preserve module IDs and stream stamping
-
-### Added
-
 - Add the `buildid-wasm-stamp` companion tool for WebAssembly modules and
   components.
 - Copy each containing core module's existing build ID into its guest-visible
